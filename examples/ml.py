@@ -1,4 +1,4 @@
-
+'''
 # Load libraries
 import pandas as pd
 # from pandas import read_csv
@@ -18,32 +18,36 @@ import pandas as pd
 # from sklearn.svm import SVC
 # import seaborn as sns
 
-...
+
 # Load dataset
-data = pd.read_csv("ABCML_Data.csv")
+data = pd.read_csv("./dataset/trial_James.csv")
 data['Image'] = data['Image'].astype('category')
 image_data = data.groupby("Image").mean().round(2)
 print(image_data)
-
+'''
 
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
 import pandas as pd
+import numpy as np
 
-data = pd.read_csv("ABCML_Data.csv")
-data['Image'] = data['Image'].astype('category')
-image_data = data.groupby("Image").mean().round(2)
-print(image_data)
+#Just for checking if the data have some works
+def check_if_data_works():
+    data = pd.read_csv("./dataset/picture/e_close/motion/trial_0")
+    data['Image'] = data['Image'].astype('category')
+    image_data = data.groupby("Image").mean().round(2)
+    print(image_data)
 
 
-def train_svmm_model():
-    data = pd.read_csv("ABCML_Data.csv") 
+
+def train_svmm_model(trial):
+    data = pd.read_csv(f"./dataset/{trial}.csv") 
     
 
     # Assuming 'X' contains your features (Beta and Alpha frequencies) and 'y' contains corresponding labels
-    X = data[['Beta', 'Alpha']].values
+    X = data[['Beta', 'Alpha', 'Theta', 'Delta']].values
     y = data['Image'].values
 
     # Splitting the data into training and validation sets (adjust test_size and random_state as needed)
@@ -77,7 +81,7 @@ def train_svmm_model():
 def predict_with_svmm_model(svm_classifier, scaler, X_new):
 #trial testing data
     # Normalize the new data using the same scaler used for training/validation data
-    
+    X_new = np.array(X_new).reshape(1, -1)  # Reshape the data. In order to change the shape of the data.
     X_new_normalized = scaler.transform(X_new)
 
     # Making predictions on the new data
@@ -88,5 +92,13 @@ def predict_with_svmm_model(svm_classifier, scaler, X_new):
     # for prediction in new_predictions:
     #     print(prediction)
 
-
+if __name__ == "__main__":
+    #Just for checking if the data have some works
+    check_if_data_works()
+    
+    #testing if code works:
+    trial_test = "picture/e_close/motion/trial_0"
+    svm_classifier, scaler = train_svmm_model(trial_test) #training the model 
+    predict_with_svmm_model(svm_classifier, scaler, [1, 1]) 
+    #^^ testing the predictive model - replace 1, 1 with any {betaValue, alphaValue} you wish
 

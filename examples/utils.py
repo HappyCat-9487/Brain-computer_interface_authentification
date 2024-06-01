@@ -82,23 +82,23 @@ def compute_band_powers(eegdata, fs):
 
     NFFT = nextpow2(winSampleLength)
     Y = np.fft.fft(dataWinCenteredHam, n=NFFT, axis=0) / winSampleLength
-    PSD = 2 * np.abs(Y[0:int(NFFT / 2), :])
+    PSD = 2 * np.abs(Y[0:int(NFFT / 2), :])   #為何沒有平方Ｙ，計算PSD不是要平方嗎？
     f = fs / 2 * np.linspace(0, 1, int(NFFT / 2))
 
     # SPECTRAL FEATURES
     # Average of band powers
     # Delta <4
     ind_delta, = np.where(f < 4)
-    meanDelta = np.mean(PSD[ind_delta, :], axis=0)
+    meanDelta = np.mean(PSD[ind_delta, :], axis=0).reshape(-1, 1)
     # Theta 4-8
     ind_theta, = np.where((f >= 4) & (f <= 8))
-    meanTheta = np.mean(PSD[ind_theta, :], axis=0)
+    meanTheta = np.mean(PSD[ind_theta, :], axis=0).reshape(-1, 1)
     # Alpha 8-12
     ind_alpha, = np.where((f >= 8) & (f <= 12))
-    meanAlpha = np.mean(PSD[ind_alpha, :], axis=0)
+    meanAlpha = np.mean(PSD[ind_alpha, :], axis=0).reshape(-1, 1)
     # Beta 12-30
     ind_beta, = np.where((f >= 12) & (f < 30))
-    meanBeta = np.mean(PSD[ind_beta, :], axis=0)
+    meanBeta = np.mean(PSD[ind_beta, :], axis=0).reshape(-1, 1)
 
     feature_vector = np.concatenate((meanDelta, meanTheta, meanAlpha,
                                      meanBeta), axis=0)

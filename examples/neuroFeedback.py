@@ -20,6 +20,16 @@ from pylsl import StreamInlet, resolve_byprop  # Module to receive EEG data
 import utils  # Our own utility functions
 from ml import train_svmm_model, predict_with_svmm_model
 
+import sys
+import pandas as pd
+import os
+import argparse
+parser = argparse.ArgumentParser(description='Know which condition state the user is in.')
+parser.add_argument('--mode', type=str, default='', help='The mode of the program. Either collecting or predicting.')
+parser.add_argument('--image', type=str, default='', help='The name of the image to show')
+parser.add_argument('--trial', type=str, default='', help='The trial number')
+args = parser.parse_args()
+
 # Handy little enum to make code more readable
 
 def most_frequent(List):
@@ -51,7 +61,7 @@ SHIFT_LENGTH = EPOCH_LENGTH - OVERLAP_LENGTH
 
 # Index of the channel(s) (electrodes) to be used
 # 0 = left ear, 1 = left forehead, 2 = right forehead, 3 = right ear
-INDEX_CHANNEL = [0]
+INDEX_CHANNEL = [0, 1, 2, 3]
 
 if __name__ == "__main__":
 
@@ -81,7 +91,7 @@ if __name__ == "__main__":
     """ 2. INITIALIZE BUFFERS """
 
     # Initialize raw EEG data buffer
-    eeg_buffer = np.zeros((int(fs * BUFFER_LENGTH), 1))
+    eeg_buffer = np.zeros((int(fs * BUFFER_LENGTH), 4))
     filter_state = None  # for use with the notch filter
 
     # Compute the number of epochs in "buffer_length"
@@ -99,7 +109,7 @@ if __name__ == "__main__":
     print('Press Ctrl-C in the console to break the while loop.')
 
     try:
-        
+        counter = 0 #counter for collecting data
         # The following loop acquires data, computes band powers, and calculates neurofeedback metrics based on those band powers
         while True:
             guesses = ["","","","","","","","","",""]
@@ -108,10 +118,10 @@ if __name__ == "__main__":
             for i in range(10):
                 eeg_data, timestamp = inlet.pull_chunk(
                     timeout=1, max_samples=int(SHIFT_LENGTH * fs))
-
+                
                 # Only keep the channel we're interested in
                 ch_data = np.array(eeg_data)[:, INDEX_CHANNEL]
-
+                
                 # Update EEG buffer with the new data
                 eeg_buffer, filter_state = utils.update_buffer(
                     eeg_buffer, ch_data, notch=True,
@@ -123,31 +133,87 @@ if __name__ == "__main__":
                                                 EPOCH_LENGTH * fs)
 
                 # Compute band powers
-                band_powers = utils.compute_band_powers(data_epoch, fs)
+                band_powers = utils.compute_band_powers(data_epoch, fs).reshape(-1, 4)
                 band_buffer, _ = utils.update_buffer(band_buffer,
-                                                    np.asarray([band_powers]))
+                                                            band_powers)
                 # Compute the average band powers for all epochs in buffer
                 # This helps to smooth out noise
                 smooth_band_powers = np.mean(band_buffer, axis=0)
                 betaWaves = band_powers[Band.Beta]
                 alphaWaves = band_powers[Band.Alpha]
-                features_for_model = [[betaWaves, alphaWaves]]
-                if 'svmm_model' not in globals():  
-                    svmm_model, scaler = train_svmm_model()
-                if 'svmm_model' in globals():
-                    prediction = predict_with_svmm_model(svmm_model, scaler, features_for_model)
-                    guesses[i]=prediction
+                thetaWaves = band_powers[Band.Theta]
+                deltaWaves = band_powers[Band.Delta]
+                features_for_model = [[betaWaves, alphaWaves, thetaWaves, deltaWaves]]
+                if args.mode == "predict" and args.trial != "":
+                    if 'svmm_model' not in globals():  
+                        svmm_model, scaler = train_svmm_model(args.trial)
+                    if 'svmm_model' in globals():
+                        prediction = predict_with_svmm_model(svmm_model, scaler, features_for_model)
+                        guesses[i]=prediction
                 
                 # print("{}".format(betaWaves)) 
+            if args.mode == "collect":
                 
-            if most_frequent(guesses)=="('Arithmeitic',)":
-                print("A")
-            elif most_frequent(guesses)=="('Bouncy',)":
-                print("B")
-            elif most_frequent(guesses)=="('Chill',)":
-                print("C")
+                #The section below is for collecting purposes
+                print(band_powers[Band.Beta])
+                print(band_powers[Band.Alpha])
+                print(band_powers[Band.Theta])
+                print(band_powers[Band.Delta])
+                print() 
+
+                
+                # Store them in the csv file
+                image_show = args.image
+                trial = args.trial
+                
+                # Create a DataFrame
+                df = pd.DataFrame({
+                    'Image': [image_show],
+                    'Beta_TF9': [band_powers[Band.Beta][0]],
+                    'Beta_AF7': [band_powers[Band.Beta][1]],
+                    'Beta_AF8': [band_powers[Band.Beta][2]],
+                    'Beta_TP10': [band_powers[Band.Beta][3]],
+                    'Alpha_TF9': [band_powers[Band.Alpha][0]],
+                    'Alpha_AF7': [band_powers[Band.Alpha][1]],
+                    'Alpha_AF8': [band_powers[Band.Alpha][2]],
+                    'Alpha_TP10': [band_powers[Band.Alpha][3]],
+                    'Theta_TF9': [band_powers[Band.Theta][0]],
+                    'Theta_AF7': [band_powers[Band.Theta][1]],
+                    'Theta_AF8': [band_powers[Band.Theta][2]],
+                    'Theta_TP10': [band_powers[Band.Theta][3]],
+                    'Delta_TF9': [band_powers[Band.Delta][0]],
+                    'Delta_AF7': [band_powers[Band.Delta][1]],
+                    'Delta_AF8': [band_powers[Band.Delta][2]],
+                    'Delta_TP10': [band_powers[Band.Delta][3]],
+                })
+                
+                
+                # Store DataFrame into CSV file
+                # Check if the file exists
+                if not os.path.exists(f'dataset/{trial}.csv'):
+                    # If file does not exist, write header
+                    df.to_csv(f'dataset/{trial}.csv', mode='a', index=False, header=True)
+                else:
+                    # If file exists, do not write header
+                    df.to_csv(f'dataset/{trial}.csv', mode='a', index=False, header=False)
+                
+                counter += 1 #counter 
+                if counter>=50:
+                    exit()
+            elif args.mode == "predict":
+                print(most_frequent(guesses))
+            
+                if most_frequent(guesses)=="('Arithmeitic',)":
+                    print("A")
+                elif most_frequent(guesses)=="('Bouncy',)":
+                    print("B")
+                elif most_frequent(guesses)=="('Chill',)":
+                    print("C")
+                else:
+                    print("Error")
             else:
-                print("Error")
+                print("Invalid mode. Not collect or predict.")
+                sys.exit()
 
 
                 #TEST FOR DELTA, THEN GAMMA, THEN BETA
@@ -156,7 +222,7 @@ if __name__ == "__main__":
                 # print('Delta: ', band_powers[Band.Delta], ' Theta: ', band_powers[Band.Theta],
                 #       ' Alpha: ', band_powers[Band.Alpha], ' Beta: ', band_powers[Band.Beta])
 
-                """ 3.3 COMPUTE NEUROFEEDBACK METRICS """
+            """ 3.3 COMPUTE NEUROFEEDBACK METRICS """
                 # These metrics could also be used to drive brain-computer interfaces
 
                 # Alpha Protocol:
