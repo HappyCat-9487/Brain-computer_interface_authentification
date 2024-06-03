@@ -1,8 +1,16 @@
 #%%
 import pandas as pd
+import os 
+import glob
 
 #%%
+
+base_dir = os.getcwd()
+
 # Check data numbers in different categories
+
+#Specify the certain file path
+'''
 file_paths = [
     './picture/e_close/motion/trial_0.csv',
     './picture/e_close/noun/trial_0.csv',
@@ -10,6 +18,9 @@ file_paths = [
     './picture/e_open/noun/trial_0.csv',
     './imagination/e_close/trial_0.csv',
 ]
+'''
+
+file_paths = glob.glob(base_dir + '/**/*.csv', recursive=True)
 
 for file_path in file_paths:
     df = pd.read_csv(file_path)
