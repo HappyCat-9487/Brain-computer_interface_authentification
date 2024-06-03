@@ -32,10 +32,11 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import accuracy_score
 import pandas as pd
 import numpy as np
+import os
 
 #Just for checking if the data have some works
-def check_if_data_works():
-    data = pd.read_csv("./dataset/picture/e_close/motion/trial_0")
+def check_if_data_works(base_dir):
+    data = pd.read_csv(base_dir + '/dataset/picture/e_close/motion/trial_1.csv')
     data['Image'] = data['Image'].astype('category')
     image_data = data.groupby("Image").mean().round(2)
     print(image_data)
@@ -43,11 +44,14 @@ def check_if_data_works():
 
 
 def train_svmm_model(trial):
-    data = pd.read_csv(f"./dataset/{trial}.csv") 
+    base_dir = os.getcwd()
+    data = pd.read_csv(base_dir + f"/dataset/{trial}.csv") 
     
-
     # Assuming 'X' contains your features (Beta and Alpha frequencies) and 'y' contains corresponding labels
-    X = data[['Beta', 'Alpha', 'Theta', 'Delta']].values
+    X = data[['Beta_TP9', 'Beta_AF7', 'Beta_AF8', 'Beta_TP10', 
+             'Alpha_TP9', 'Alpha_AF7', 'Alpha_AF8', 'Alpha_TP10',
+             'Theta_TP9', 'Theta_AF7', 'Theta_AF8', 'Theta_TP10',
+             'Delta_TP9', 'Delta_AF7', 'Delta_AF8', 'Delta_TP10']].values
     y = data['Image'].values
 
     # Splitting the data into training and validation sets (adjust test_size and random_state as needed)
@@ -94,11 +98,14 @@ def predict_with_svmm_model(svm_classifier, scaler, X_new):
 
 if __name__ == "__main__":
     #Just for checking if the data have some works
-    check_if_data_works()
+    base_dir = os.getcwd()
+    #print(base_dir)
+    
+    check_if_data_works(base_dir)
     
     #testing if code works:
     trial_test = "picture/e_close/motion/trial_0"
     svm_classifier, scaler = train_svmm_model(trial_test) #training the model 
-    predict_with_svmm_model(svm_classifier, scaler, [1, 1]) 
+    predict_with_svmm_model(svm_classifier, scaler, [1, 1, 1, 1]) 
     #^^ testing the predictive model - replace 1, 1 with any {betaValue, alphaValue} you wish
 

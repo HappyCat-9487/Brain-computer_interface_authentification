@@ -51,3 +51,16 @@ df_trail_9.to_csv('./picture/e_open/motion/trial_9.csv', index=False)
 df_trail_9 = pd.read_csv('./picture/e_open/motion/trial_9.csv')
 catch = df_trail_9.loc[df_trail_9['Image'] == 'Catch']
 print(catch)
+
+#%%
+#Change the index name of the CSV file
+base_dir = os.getcwd()
+file_paths = glob.glob(base_dir + '/**/*.csv', recursive=True)
+
+for file_path in file_paths:
+    df = pd.read_csv(file_path)
+    
+    #Check if any column is named as "TF9"
+    if any("TF9" in col for col in df.columns):
+        df.rename(columns=lambda x: x.replace('TF9', 'TP9'), inplace=True)
+        df.to_csv(file_path, index=False)
