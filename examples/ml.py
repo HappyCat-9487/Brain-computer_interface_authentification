@@ -36,7 +36,7 @@ import os
 
 #Just for checking if the data have some works
 def check_if_data_works(base_dir):
-    data = pd.read_csv(base_dir + '/dataset/picture/e_close/motion/trial_1.csv')
+    data = pd.read_csv(base_dir + '/dataset/Pictures/e_close/motion/trial_1.csv')
     data['Image'] = data['Image'].astype('category')
     image_data = data.groupby("Image", observed=True).mean().round(2)
     print(image_data)
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     check_if_data_works(base_dir)
     
     #testing if code works:
-    trial_test = "picture/e_close/motion/trial_1"
+    trial_test = "Pictures/e_close/motion/trial_1"
     svm_classifier, scaler = train_svmm_model(trial_test) #training the model 
     prediction = predict_with_svmm_model(svm_classifier, scaler, [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]) 
     print(prediction)

@@ -1,4 +1,5 @@
-/dataset/imagination/*
-/dataset/picture/*
+/dataset/Imagination/*
+/dataset/Pictures/*
+/dataset/without_individuals/*
 /Image/*
 .DS_Store
