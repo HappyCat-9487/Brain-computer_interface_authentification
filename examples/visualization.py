@@ -19,7 +19,7 @@ for file_path in file_paths:
 
 #%%
 
-#Check the average values for different channels of the data by sewparating the data by "Image"
+#Check the average values for different channels of the data by separating the data by "Image"
 file_paths = glob.glob('../dataset/without_individuals/*.csv', recursive=True)
 
 for file_path in file_paths:
@@ -42,8 +42,29 @@ for file_path in file_paths:
     plt.show()
     
 #%%
+#Check the average and the standard deviation values for different channels of the data by separating the data by "Image"
 for file_path in file_paths:
     df = pd.read_csv(file_path)
     df['Image'] = df['Image'].astype('category')
     
+    image_mean = df.groupby("Image", observed=True).mean().round(2)
+    image_std = df.groupby("Image", observed=True).std().round(2)
     
+    csv_name = os.path.splitext(os.path.basename(file_path))[0]
+    
+    for column in image_mean.columns:
+        plt.figure(figsize=(10, 6))
+        plt.scatter(image_mean.index, image_mean[column], label='Mean')
+        plt.scatter(image_std.index, image_std[column], label='Std')
+        plt.title('Mean and Std values for ' + column + ' in ' + csv_name)
+        plt.xticks(rotation=45)
+        plt.xlabel('Image')
+        plt.ylabel('Value')
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.show()
+
+        plt.figure(figsize=(10, 6))
+        sns.violinplot(x=df['Image'], y=df[column])
+        plt.title('Violin plot for ' + column + ' in ' + csv_name)
+        plt.xticks(rotation=45)
+        plt.show()
