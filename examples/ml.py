@@ -42,17 +42,30 @@ def check_if_data_works(base_dir):
     print(image_data)
 
 
-
-def train_svmm_model(trial):
+def train_svmm_model(trial, number_parameters=16, freq_range='Beta', kernel='rbf', C=1.0, gamma='scale'):
     base_dir = os.getcwd()
     data = pd.read_csv(base_dir + f"/dataset/{trial}.csv") 
     
-    # Assuming 'X' contains your features (Beta and Alpha frequencies) and 'y' contains corresponding labels
-    X = data[['Beta_TP9', 'Beta_AF7', 'Beta_AF8', 'Beta_TP10', 
-             'Alpha_TP9', 'Alpha_AF7', 'Alpha_AF8', 'Alpha_TP10',
-             'Theta_TP9', 'Theta_AF7', 'Theta_AF8', 'Theta_TP10',
-             'Delta_TP9', 'Delta_AF7', 'Delta_AF8', 'Delta_TP10']].values
-    y = data['Image'].values
+    # Assuming 'X' contains your features (The frequency ranges) and 'y' contains corresponding labels
+    if number_parameters == 16:
+        X = data[['Beta_TP9', 'Beta_AF7', 'Beta_AF8', 'Beta_TP10', 
+                'Alpha_TP9', 'Alpha_AF7', 'Alpha_AF8', 'Alpha_TP10',
+                'Theta_TP9', 'Theta_AF7', 'Theta_AF8', 'Theta_TP10',
+                'Delta_TP9', 'Delta_AF7', 'Delta_AF8', 'Delta_TP10']].values
+        y = data['Image'].values
+    elif number_parameters == 8:
+        X = data[['Beta_TP9', 'Beta_AF7', 'Beta_AF8', 'Beta_TP10', 
+                'Alpha_TP9', 'Alpha_AF7', 'Alpha_AF8', 'Alpha_TP10']].values
+        y = data['Image'].values
+    elif number_parameters == 4 and freq_range == 'Beta':
+        X = data[['Beta_TP9', 'Beta_AF7', 'Beta_AF8', 'Beta_TP10']].values
+        y = data['Image'].values
+    elif number_parameters == 4 and freq_range == 'Alpha':
+        X = data[['Alpha_TP9', 'Alpha_AF7', 'Alpha_AF8', 'Alpha_TP10']].values
+        y = data['Image'].values
+    else:
+        print("Invalid number of parameters or frequency range specified.")
+        return None
 
     # Splitting the data into training and validation sets (adjust test_size and random_state as needed)
     X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
@@ -64,7 +77,7 @@ def train_svmm_model(trial):
 
 
     # Initializing SVM classifier (you can experiment with different kernels and parameters)
-    svm_classifier = SVC(kernel='rbf', C=1.0, gamma='scale')  # Example with RBF kernel
+    svm_classifier = SVC(kernel=kernel, C=C, gamma=gamma)  # Example with RBF kernel
 
     # Training the SVM model
     svm_classifier.fit(X_train_normalized, y_train)

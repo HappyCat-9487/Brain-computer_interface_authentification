@@ -201,14 +201,20 @@ if __name__ == "__main__":
                 if counter>=50:
                     exit()
             elif args.mode == "predict":
-                print(most_frequent(guesses))
+                #print(most_frequent(guesses))
             
-                if most_frequent(guesses)=="('Arithmeitic',)":
+                if most_frequent(guesses)==('Arithmetic',):
                     print("A")
-                elif most_frequent(guesses)=="('Bouncy',)":
+                elif most_frequent(guesses)==('Bouncy',):
                     print("B")
-                elif most_frequent(guesses)=="('Chill',)":
+                elif most_frequent(guesses)==('Catch',):
                     print("C")
+                elif most_frequent(guesses)==('Deny',):
+                    print("D")
+                elif most_frequent(guesses)==('Eat',):
+                    print("E")
+                elif most_frequent(guesses)==('Fight',):
+                    print("F")
                 else:
                     print("Error")
             else:
