@@ -41,7 +41,7 @@ def check_if_data_works(base_dir):
     image_data = data.groupby("Image", observed=True).mean().round(2)
     print(image_data)
 
-
+    
 def train_svmm_model(trial, number_parameters=16, freq_range='Beta', kernel='rbf', C=1.0, gamma='scale'):
     base_dir = os.getcwd()
     data = pd.read_csv(base_dir + f"/dataset/{trial}.csv") 
@@ -88,7 +88,7 @@ def train_svmm_model(trial, number_parameters=16, freq_range='Beta', kernel='rbf
     # Calculating accuracy
     accuracy = accuracy_score(y_val, predictions)
 
-    return svm_classifier, scaler
+    return svm_classifier, scaler, accuracy
 
 # Remember to replace X and y with your actual feature and label data. 
 # Also, feel free to adjust the SVM parameters (kernel, C, etc.) and explore different kernels (e.g., 'linear', 'poly', 'rbf') to find the best model for your data.

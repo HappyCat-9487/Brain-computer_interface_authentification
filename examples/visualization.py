@@ -6,6 +6,7 @@ import os
 import seaborn as sns
 
 #%%
+#Check the distribution of the data in different situations, separating the data by "Image"
 file_paths = glob.glob('../dataset/without_individuals/*.csv', recursive=True)
 
 for file_path in file_paths:
@@ -43,6 +44,7 @@ for file_path in file_paths:
     
 #%%
 #Check the average and the standard deviation values for different channels of the data by separating the data by "Image"
+#Recommend not run this code
 for file_path in file_paths:
     df = pd.read_csv(file_path)
     df['Image'] = df['Image'].astype('category')
@@ -68,3 +70,44 @@ for file_path in file_paths:
         plt.title('Violin plot for ' + column + ' in ' + csv_name)
         plt.xticks(rotation=45)
         plt.show()
+
+#%%
+
+print("Current working directory:", os.getcwd())
+
+#%%
+#Change the path
+os.chdir('/Users/luchengliang/Brain-computer_interface_authentification')
+print("Current working directory:", os.getcwd())
+#%%
+#See the validation of the SVM model performance
+from ml import train_svmm_model
+
+trials = [
+    "without_individuals/pic_e_close_motion",
+    "without_individuals/pic_e_close_noun",
+    "without_individuals/pic_e_open_motion",
+    "without_individuals/pic_e_open_noun",
+    "without_individuals/imagination",
+    ]
+
+paras = [16, 8, 4, 4]
+
+
+
+for trial in trials:
+    # Get the last part of the path (the file name) and remove the ".csv" extension
+    trial_name = os.path.splitext(os.path.basename(trial))[0]
+    
+    for i in range(4):
+        if paras[i] == 4 and i == 2:
+            svmm_model, scaler, acc = train_svmm_model(trial, number_parameters=paras[i], freq_range='Beta')
+        elif paras[i] == 4 and i == 3:
+            svmm_model, scaler, acc = train_svmm_model(trial, number_parameters=paras[i], freq_range='Alpha')
+        else:
+            svmm_model, scaler, acc = train_svmm_model(trial, number_parameters=paras[i])
+        
+        print(f"Trial and parameters: {trial_name} with {paras[i]} parameters.")
+        print("Accuracy:", acc, "\n\n")
+    
+    print("-" * 50, "\n\n")  # print a separator line

@@ -146,7 +146,7 @@ if __name__ == "__main__":
                 features_for_model = [[betaWaves, alphaWaves, thetaWaves, deltaWaves]]
                 if args.mode == "predict" and args.trial != "":
                     if 'svmm_model' not in globals():  
-                        svmm_model, scaler = train_svmm_model(args.trial)
+                        svmm_model, scaler, _ = train_svmm_model(args.trial)
                     if 'svmm_model' in globals():
                         prediction = predict_with_svmm_model(svmm_model, scaler, features_for_model)
                         guesses[i]=prediction
