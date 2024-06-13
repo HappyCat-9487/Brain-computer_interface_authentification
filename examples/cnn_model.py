@@ -62,8 +62,14 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
     else:
         raise ValueError("Wwe are not using one-hot encoding.")
     
+    #print(X_train_normalized)
+    #print(y_train)
+    print(X_train_normalized.shape)
+    print(y_train.shape)
+    
+    
     # Reshape the data to fit the model
-    X = X.reshape(X_train_normalized.shape[0], 1, X_train_normalized.shape[1], X_train_normalized.shape[2])
+    X = X_train_normalized.reshape(X_train_normalized.shape[0], 1, X_train_normalized.shape[1], X_train_normalized.shape[2])
 
     # Convert to torch tensors
     X = torch.from_numpy(X_train_normalized).float()
@@ -111,3 +117,17 @@ def predict_with_cnn_model(cnn_model, features_for_model):
     outputs = cnn_model(features_for_model)
     _, predicted = torch.max(outputs, 1)
     return predicted
+
+
+if __name__ == "__main__":
+    trial = "without_individuals/pic_e_close_motion"
+
+    paras = [16, 8, 4, 4]
+
+    # Get the last part of the path (the file name) and remove the ".csv" extension
+    trial_name = os.path.splitext(os.path.basename(trial))[0]
+
+    for i in range(4):
+        if paras[i] == 4 and i == 2:
+            cnn_model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Beta')
+            print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")

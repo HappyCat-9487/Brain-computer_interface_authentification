@@ -113,33 +113,30 @@ for trial in trials:
     print("-" * 50, "\n\n")  # print a separator line
     
 #%%
+
+#Change the path
+os.chdir('/Users/luchengliang/Brain-computer_interface_authentification')
+print("Current working directory:", os.getcwd())
+
 #See the validation of the CNN model performance
 from cnn_model import train_CNN_model
 
-trials = [
-    "without_individuals/pic_e_close_motion",
-    "without_individuals/pic_e_close_noun",
-    "without_individuals/pic_e_open_motion",
-    "without_individuals/pic_e_open_noun",
-    "without_individuals/imagination",
-    ]
+trial = "without_individuals/pic_e_close_motion"
 
 paras = [16, 8, 4, 4]
 
+# Get the last part of the path (the file name) and remove the ".csv" extension
+trial_name = os.path.splitext(os.path.basename(trial))[0]
 
-for trial in trials:
-    # Get the last part of the path (the file name) and remove the ".csv" extension
-    trial_name = os.path.splitext(os.path.basename(trial))[0]
+for i in range(4):
+    if paras[i] == 4 and i == 2:
+        model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Beta')
+    elif paras[i] == 4 and i == 3:
+        model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Alpha')
+    else:
+        model, acc = train_CNN_model(trial, number_parameters=paras[i])
     
-    for i in range(4):
-        if paras[i] == 4 and i == 2:
-            model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Beta')
-        elif paras[i] == 4 and i == 3:
-            model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Alpha')
-        else:
-            model, acc = train_CNN_model(trial, number_parameters=paras[i])
-        
-        print(f"Trial and parameters: {trial_name} with {paras[i]} parameters.")
-        print("Accuracy:", acc, "\n\n")
-    
-    print("-" * 50, "\n\n")  # print a separator line
+    print(f"Trial and parameters: {trial_name} with {paras[i]} parameters.")
+    print("Accuracy:", acc, "\n\n")
+
+#print("-" * 50, "\n\n")  # print a separator line
