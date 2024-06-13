@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt  # Module used for plotting
 from pylsl import StreamInlet, resolve_byprop  # Module to receive EEG data
 import utils  # Our own utility functions
 from ml import train_svmm_model, predict_with_svmm_model
+from cnn_model import train_CNN_model, predict_with_cnn_model
 
 import sys
 import pandas as pd
@@ -26,6 +27,7 @@ import os
 import argparse
 parser = argparse.ArgumentParser(description='Know which condition state the user is in.')
 parser.add_argument('--mode', type=str, default='', help='The mode of the program. Either collecting or predicting.')
+parser.add_argument('--model', type=str, default='', help='The model to use for prediction')
 parser.add_argument('--image', type=str, default='', help='The name of the image to show')
 parser.add_argument('--trial', type=str, default='', help='The trial number')
 args = parser.parse_args()
@@ -144,11 +146,18 @@ if __name__ == "__main__":
                 thetaWaves = band_powers[Band.Theta]
                 deltaWaves = band_powers[Band.Delta]
                 features_for_model = [[betaWaves, alphaWaves, thetaWaves, deltaWaves]]
-                if args.mode == "predict" and args.trial != "":
+                if args.mode == "predict" and args.trial != "" and args.model == "svm":
                     if 'svmm_model' not in globals():  
                         svmm_model, scaler, _ = train_svmm_model(args.trial)
                     if 'svmm_model' in globals():
                         prediction = predict_with_svmm_model(svmm_model, scaler, features_for_model)
+                        guesses[i]=prediction
+                
+                if args.mode == "predict" and args.trial != "" and args.model == "cnn":
+                    if 'cnn_model' not in globals():
+                        cnn_model = train_CNN_model(args.trial)
+                    if 'cnn_model' in globals():
+                        prediction = predict_with_cnn_model(cnn_model, features_for_model)
                         guesses[i]=prediction
                 
                 # print("{}".format(betaWaves)) 
