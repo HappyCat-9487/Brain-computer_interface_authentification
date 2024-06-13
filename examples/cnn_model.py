@@ -3,7 +3,9 @@ from torch import nn
 import torch.nn.functional as F
 import os
 import pandas as pd
-
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from torch.utils.data import DataLoader, TensorDataset
 
 class CNNModel(nn.Module):
     def __init__(self):
@@ -46,14 +48,33 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
         print("Invalid number of parameters or frequency range specified.")
         return None
     
-    # Assuming X is your feature data and y are your labels
+    # Splitting the data into training and validation sets (adjust test_size and random_state as needed)
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Normalizing the features (scaling between 0 and 1)
+    scaler = MinMaxScaler()
+    X_train_normalized = scaler.fit_transform(X_train)
+    X_val_normalized = scaler.transform(X_val)
+    
+    # Handle categorical labels (if applicable)
+    if pd.api.types.is_string_dtype(y_train):
+        y_train = pd.get_dummies(y_train).values  # One-hot encode labels
+    else:
+        raise ValueError("Wwe are not using one-hot encoding.")
+    
     # Reshape the data to fit the model
-    X = X.reshape(X.shape[0], 1, X.shape[1], X.shape[2])
+    X = X.reshape(X_train_normalized.shape[0], 1, X_train_normalized.shape[1], X_train_normalized.shape[2])
 
     # Convert to torch tensors
-    X = torch.from_numpy(X).float()
-    y = torch.from_numpy(y).long()
+    X = torch.from_numpy(X_train_normalized).float()
+    y = torch.from_numpy(y_train).long()
 
+    # Create Tensor datasets
+    train_data = TensorDataset(X, y)
+
+    # Create DataLoaders
+    train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
+    
     # Create a CNN model
     model = CNNModel()
 
@@ -63,14 +84,26 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
 
     # Train the model
     for epoch in range(epochs):
-        optimizer.zero_grad()
-        outputs = model(X)
-        loss = loss_fn(outputs, y)
-        loss.backward()
-        optimizer.step()
+        for X_batch, y_batch in train_loader:
+            optimizer.zero_grad()
+            outputs = model(X_batch)
+            loss = loss_fn(outputs, y_batch)
+            loss.backward()
+            optimizer.step()
 
-    return model
+    # Evaluate the model
+    model.eval()
+    with torch.no_grad():
+        X_val_normalized = X_val_normalized.reshape(X_val_normalized.shape[0], 1, X_val_normalized.shape[1], X_val_normalized.shape[2])
+        X_val = torch.from_numpy(X_val_normalized).float()
+        outputs = model(X_val)
+        _, predicted = torch.max(outputs, 1)
+        accuracy = (predicted == y_val).sum().item() / len(y_val)
+    
+    return model, accuracy
 
+
+#todo: modify the predict function
 def predict_with_cnn_model(cnn_model, features_for_model):
     # Assuming features_for_model is a 2D numpy array
     features_for_model = features_for_model.reshape(features_for_model.shape[0], 1, features_for_model.shape[1], features_for_model.shape[2])
