@@ -7,26 +7,22 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
 
-class CNNModel(nn.Module):
+class FullyConnectedModel(nn.Module):
     def __init__(self, input_size=16):
-        super(CNNModel, self).__init__()
-        self.conv1 = nn.Conv1d(1, 64, kernel_size=3, stride=1, padding=1)
-        self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
-        self.conv2 = nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1)
-        self.fc1 = nn.Linear(32 * (input_size//4), 32)
-        self.fc2 = nn.Linear(32, 6)
+        super(FullyConnectedModel, self).__init__()
+        self.fc1 = nn.Linear(input_size, 64)
+        self.fc2 = nn.Linear(64, 32)
+        self.fc3 = nn.Linear(32, 6)
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 32 * x.size(2))
+        x = x.view(x.size(0), -1)  # Flatten the input
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = self.softmax(x)
+        x = self.softmax(self.fc3(x))
         return x
 
-def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, batch_size=32):
+def train_FC_model(trial, number_parameters=16, freq_range='Beta', epochs=10, batch_size=32):
     
     base_dir = os.getcwd()
     data = pd.read_csv(base_dir + f"/dataset/{trial}.csv") 
@@ -52,7 +48,6 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
         print("Invalid number of parameters or frequency range specified.")
         return None
     
-    
     y = data['Image'].values
     y = pd.get_dummies(y).values  # One-hot encode labels
     
@@ -65,10 +60,9 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
     X_val_normalized = scaler.transform(X_val)
     
     # Reshape the data to fit the model
-    X_train_normalized = X_train_normalized.reshape(X_train_normalized.shape[0], 1, X_train_normalized.shape[1])
-    X_val_normalized = X_val_normalized.reshape(X_val_normalized.shape[0], 1, X_val_normalized.shape[1])
+    X_train_normalized = X_train_normalized.reshape(X_train_normalized.shape[0], X_train_normalized.shape[1])
+    X_val_normalized = X_val_normalized.reshape(X_val_normalized.shape[0], X_val_normalized.shape[1])
      
-    
     # Convert to torch tensors
     X_train_tensor = torch.tensor(X_train_normalized, dtype=torch.float32)
     y_train_tensor = torch.tensor(y_train, dtype=torch.float32)
@@ -79,8 +73,8 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
     train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     
-    # Our CNN model
-    model = CNNModel(input_size=number_parameters)
+    # Our Fully Connected model
+    model = FullyConnectedModel(input_size=number_parameters)
 
     # Define the loss function and optimizer
     loss_fn = nn.CrossEntropyLoss()
@@ -106,21 +100,19 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
     
     return model, accuracy
 
-
-#todo: modify the predict function
-def predict_with_cnn_model(cnn_model, features_for_model):
-    features_for_model = features_for_model.reshape(features_for_model.shape[0], 1, features_for_model.shape[1])
+def predict_with_fc_model(fc_model, features_for_model):
+    features_for_model = features_for_model.reshape(features_for_model.shape[0], features_for_model.shape[1])
     features_for_model = torch.from_numpy(features_for_model).float()
     
     # Ensure the model is in evaluation mode
-    cnn_model.eval()  
+    fc_model.eval()  
     with torch.no_grad():
-        outputs = cnn_model(features_for_model)
+        outputs = fc_model(features_for_model)
         _, predicted = torch.max(outputs, 1)
     return predicted
 
 if __name__ == "__main__":
-    trial = "without_individuals/pic_e_close_motion"
+    trial = "without_individuals/pic_e_close_motion.csv"  # Added .csv to match file reading
 
     paras = [16, 8, 4, 4]
 
@@ -129,7 +121,7 @@ if __name__ == "__main__":
 
     for i in range(4):
         if paras[i] == 4 and i == 2:
-            cnn_model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Beta')
+            fc_model, acc = train_FC_model(trial, number_parameters=paras[i], freq_range='Beta')
         else:
-            cnn_model, acc = train_CNN_model(trial, number_parameters=paras[i])
+            fc_model, acc = train_FC_model(trial, number_parameters=paras[i])
         print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
