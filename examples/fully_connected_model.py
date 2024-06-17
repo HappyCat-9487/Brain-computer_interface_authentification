@@ -112,7 +112,7 @@ def predict_with_fc_model(fc_model, features_for_model):
     return predicted
 
 if __name__ == "__main__":
-    trial = "without_individuals/pic_e_close_motion.csv"  # Added .csv to match file reading
+    trial = "without_individuals/pic_e_close_motion"  # Added .csv to match file reading
 
     paras = [16, 8, 4, 4]
 
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     for i in range(4):
         if paras[i] == 4 and i == 2:
-            fc_model, acc = train_FC_model(trial, number_parameters=paras[i], freq_range='Beta')
+            fc_model, acc = train_FC_model(trial, number_parameters=paras[i], freq_range='Alpha')
         else:
             fc_model, acc = train_FC_model(trial, number_parameters=paras[i])
         print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")

@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
     for i in range(4):
         if paras[i] == 4 and i == 2:
-            cnn_model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Beta')
+            cnn_model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Alpha')
         else:
             cnn_model, acc = train_CNN_model(trial, number_parameters=paras[i])
         print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
