@@ -69,22 +69,26 @@ class RandomForestModel:
         return y_pred_labels
 
 if __name__ == "__main__":
-    trial = "without_individuals/pic_e_close_motion"
+    trials = [
+        "without_individuals/pic_e_close_motion",
+        "without_individuals/pic_e_close_noun",
+        "without_individuals/pic_e_open_motion",
+        "without_individuals/pic_e_open_noun",
+        "without_individuals/imagination",
+    ]
 
     paras = [16, 8, 4, 4]
-    rf_model = RandomForestModel(n_estimators=100)
-
-    # Get the last part of the path (file name) and remove the ".csv" extension
-    trial_name = os.path.splitext(os.path.basename(trial))[0]
-
-    for i in range(4):
-        if paras[i] == 4 and i == 2:
-            acc = rf_model.train(trial, number_parameters=paras[i], freq_range='Beta')
-        else:
-            acc = rf_model.train(trial, number_parameters=paras[i])
-        print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
     
-    # Example usage of predict method
-    new_data = [[0.5, 0.6, 0.7, 0.8, 0.5, 0.6, 0.7, 0.8, 0.5, 0.6, 0.7, 0.8, 0.5, 0.6, 0.7, 0.8]]  # Example new data
-    predictions = rf_model.predict(new_data)
-    print(f"Predictions for new data: {predictions}")
+    for trial in trials:
+        rf_model = RandomForestModel(n_estimators=100)
+
+        # Get the last part of the path (file name) and remove the ".csv" extension
+        trial_name = os.path.splitext(os.path.basename(trial))[0]
+
+        for i in range(4):
+            if paras[i] == 4 and i == 2:
+                acc = rf_model.train(trial, number_parameters=paras[i], freq_range='Alpha')
+            else:
+                acc = rf_model.train(trial, number_parameters=paras[i])
+            print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
+    

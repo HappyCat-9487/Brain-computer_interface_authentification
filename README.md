@@ -1,25 +1,18 @@
-Welcome to my brain controlled keyboard repo!! Glad to have you here :)
+Hi, this is the repository for my thesis. Thanks to Giselle Chan’s project, which inspired my start in this method.
+In addition to the original classification method cloned from Giselle Chan’s (she used support vector classification), I also added some other machine learning and deep learning methods, such as random forest, convolution neuro network, and a fully connected network. This is to see if these methods can increase the accuracy since the different subjects in the project have measured and gathered their CSV data together. As I assumed, with the same implication sentences or imaginations, people’s brainwaves may be similar, which is a totally different idea from hers. 
 
-This is a forked repo from Alexandre Barachant with some heavy modificaitons and integration of a machine learning model with my own data sets. 
+This repo should work with the installation of the application “Petal Metrics.”
 
-This repo should work with the installation of application "Petal Metrics".
+!!As my thesis project is still ongoing, so I will keep updating(Also, the Readme)… Hope you have a nice day!!
 
-The function of this repo is to detect your brainwave frequencies from your Muse headband and from then on predict the letter you're thinking of out of A, B, or C. 
-
-To type A, think of an "arithmetic sequence" (neutral)
-To type B, think of a "bouncy ball" (high freq)
-To type C, think of a "chill pond" (low freq)
-
-NB: everyone's brainwave frequencies may differ from each other, so for best results create your own data set using Alexandre's original file and your Muse and replace my ABCML_Data with that (format is csv)
-
-Check out my Youtube video for a live demo: https://www.youtube.com/watch?v=rgTSN3wEdDg
-Check out my Medium article for a full tutorial: https://medium.com/@cctgiselle/how-to-build-an-instantaneous-keyboard-controlled-by-thought-bcixml-94e8f7d196dd
-
-Hope you enjoy!
--Giselle
+ -- HappyCat9487
 
 
-Below is the README from Alexandre Barachant
+By the way, 
+This is the repository of Giselle Chan’s project that inspired me: https://github.com/ctgchan/BCIxML_BrainControlledKeyboard_ABCs.git
+
+
+Below is the README from Alexandre Barachant you could play with and explored
 ----
 [![DOI](https://zenodo.org/badge/80209610.svg)](https://zenodo.org/badge/latestdoi/80209610)
 
