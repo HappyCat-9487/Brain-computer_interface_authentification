@@ -6,7 +6,7 @@ from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
-class ModelTrainer:
+class TreesModelTrainer:
     def __init__(self, trial, number_parameters=16, freq_range='Beta'):
         self.trial = trial
         self.number_parameters = number_parameters
@@ -81,9 +81,9 @@ if __name__ == "__main__":
         
         for i in range(4):
             if paras[i] == 4 and i == 2:
-                trainer = ModelTrainer(trial, number_parameters=paras[i], freq_range='Beta')
+                trainer = TreesModelTrainer(trial, number_parameters=paras[i], freq_range='Beta')
             else:
-                trainer = ModelTrainer(trial, number_parameters=paras[i])
+                trainer = TreesModelTrainer(trial, number_parameters=paras[i])
             model, acc = trainer.train_extra_trees()
             print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
         
@@ -91,8 +91,8 @@ if __name__ == "__main__":
         
         for i in range(4):
             if paras[i] == 4 and i == 2:
-                trainer = ModelTrainer(trial, number_parameters=paras[i], freq_range='Beta')
+                trainer = TreesModelTrainer(trial, number_parameters=paras[i], freq_range='Beta')
             else:
-                trainer = ModelTrainer(trial, number_parameters=paras[i])
+                trainer = TreesModelTrainer(trial, number_parameters=paras[i])
             model, acc = trainer.train_gb()
             print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
