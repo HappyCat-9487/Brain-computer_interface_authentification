@@ -6,8 +6,9 @@ from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
-class TreesModelTrainer:
-    def __init__(self, trial, number_parameters=16, freq_range='Beta'):
+class TreesModel:
+    def __init__(self, trial, n_estimators=100, number_parameters=16, freq_range='Beta'):
+        self.n_estimators = n_estimators
         self.trial = trial
         self.number_parameters = number_parameters
         self.freq_range = freq_range
@@ -45,14 +46,14 @@ class TreesModelTrainer:
         return X_train_normalized, X_val_normalized, y_train, y_val
 
     def train_extra_trees(self):
-        model = ExtraTreesClassifier(n_estimators=100, random_state=42)
+        model = ExtraTreesClassifier(n_estimators=self.n_estimators, random_state=42)
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_val)
         accuracy = accuracy_score(self.y_val, y_pred)
         return model, accuracy
 
     def train_gb(self):
-        model = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
+        model = GradientBoostingClassifier(n_estimators=self.n_estimators, learning_rate=0.1, max_depth=3, random_state=42)
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_val)
         accuracy = accuracy_score(self.y_val, y_pred)
@@ -81,9 +82,9 @@ if __name__ == "__main__":
         
         for i in range(4):
             if paras[i] == 4 and i == 2:
-                trainer = TreesModelTrainer(trial, number_parameters=paras[i], freq_range='Beta')
+                trainer = TreesModel(trial, number_parameters=paras[i], freq_range='Beta')
             else:
-                trainer = TreesModelTrainer(trial, number_parameters=paras[i])
+                trainer = TreesModel(trial, number_parameters=paras[i])
             model, acc = trainer.train_extra_trees()
             print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
         
@@ -91,8 +92,8 @@ if __name__ == "__main__":
         
         for i in range(4):
             if paras[i] == 4 and i == 2:
-                trainer = TreesModelTrainer(trial, number_parameters=paras[i], freq_range='Beta')
+                trainer = TreesModel(trial, number_parameters=paras[i], freq_range='Beta')
             else:
-                trainer = TreesModelTrainer(trial, number_parameters=paras[i])
+                trainer = TreesModel(trial, number_parameters=paras[i])
             model, acc = trainer.train_gb()
             print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")

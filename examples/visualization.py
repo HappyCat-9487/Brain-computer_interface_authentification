@@ -4,6 +4,11 @@ import matplotlib.pyplot as plt
 import glob
 import os
 import seaborn as sns
+from ml import train_svmm_model
+from cnn_model import train_CNN_model
+from randomForest import RandomForestModel
+from Trees import TreesModel
+from fully_connected_model import train_FC_model
 
 #%%
 #Check the distribution of the data in different situations, separating the data by "Image"
@@ -71,6 +76,9 @@ for file_path in file_paths:
         plt.xticks(rotation=45)
         plt.show()
 
+
+
+
 #%%
 
 print("Current working directory:", os.getcwd())
@@ -78,10 +86,9 @@ print("Current working directory:", os.getcwd())
 #%%
 #Change the path
 os.chdir('/Users/luchengliang/Brain-computer_interface_authentification')
-print("Current working directory:", os.getcwd())
-#%%
-#See the validation of the SVM model performance
-from ml import train_svmm_model
+#print("Current working directory:", os.getcwd())
+
+#Check various models performance with thefundamental hyperparameters
 
 trials = [
     "without_individuals/pic_e_close_motion",
@@ -93,7 +100,7 @@ trials = [
 
 paras = [16, 8, 4, 4]
 
-
+randforest_model = RandomForestModel(n_estimators=100)
 
 for trial in trials:
     # Get the last part of the path (the file name) and remove the ".csv" extension
@@ -101,49 +108,43 @@ for trial in trials:
     
     for i in range(4):
         if paras[i] == 4 and i == 2:
-            svmm_model, scaler, acc = train_svmm_model(trial, number_parameters=paras[i], freq_range='Beta')
+            svmm_model, scaler, acc_svm = train_svmm_model(trial, number_parameters=paras[i], freq_range='Beta')
+            cnn_model, acc_cnn = train_CNN_model(trial, number_parameters=paras[i], freq_range='Beta')
+            fc_model, acc_fc = train_FC_model(trial, number_parameters=paras[i], freq_range='Beta')
+            cc = randforest_model.train(trial, number_parameters=paras[i], freq_range='Beta')
+            
+            trees_model = TreesModel(trial, n_estimators=100, number_parameters=paras[i], freq_range='Beta')
+            model_extree,acc_et = trees_model.train_extra_trees()
+            model_gb, acc_gb = trees_model.train_gb()
+            
         elif paras[i] == 4 and i == 3:
-            svmm_model, scaler, acc = train_svmm_model(trial, number_parameters=paras[i], freq_range='Alpha')
+            svmm_model, scaler, acc_svm = train_svmm_model(trial, number_parameters=paras[i], freq_range='Alpha')
+            cnn_model, acc_cnn = train_CNN_model(trial, number_parameters=paras[i], freq_range='Alpha')
+            fc_model, acc_fc = train_FC_model(trial, number_parameters=paras[i], freq_range='Alpha')
+            acc = randforest_model.train(trial, number_parameters=paras[i], freq_range='Alpha')
+            
+            trees_model = TreesModel(trial, n_estimators=100, number_parameters=paras[i], freq_range='Alpha')
+            model_extree,acc_et = trees_model.train_extra_trees()
+            model_gb, acc_gb = trees_model.train_gb()
+            
         else:
-            svmm_model, scaler, acc = train_svmm_model(trial, number_parameters=paras[i])
+            svmm_model, scaler, acc_svm = train_svmm_model(trial, number_parameters=paras[i])
+            cnn_model, acc_cnn = train_CNN_model(trial, number_parameters=paras[i])
+            fc_model, acc_fc = train_FC_model(trial, number_parameters=paras[i])
+            acc_rf = randforest_model.train(trial, number_parameters=paras[i])
+            
+            trees_model = TreesModel(trial, n_estimators=100, number_parameters=paras[i])
+            model_extree,acc_et = trees_model.train_extra_trees()
+            model_gb, acc_gb = trees_model.train_gb()
         
         print(f"Trial and parameters: {trial_name} with {paras[i]} parameters.")
-        print("Accuracy:", acc, "\n\n")
+        print("Accuracy of SVM:", acc_svm, "\n")
+        print("Accuracy of CNN:", acc_cnn, "\n")
+        print("Accuracy of Fully Connected Neuro Network:", acc_fc, "\n")
+        print("Accuracy of Random Forest:", acc_rf, "\n")
+        print("Accuracy of Exta Trees:", acc_et, "\n")
+        print("Accuracy of Gradient Boosting Trees:", acc_gb, "\n")
+        print("-" * 30, "\n\n")  # print a separator line
     
     print("-" * 50, "\n\n")  # print a separator line
     
-#%%
-
-#Change the path
-os.chdir('/Users/luchengliang/Brain-computer_interface_authentification')
-print("Current working directory:", os.getcwd())
-
-#See the validation of the CNN model performance
-from cnn_model import train_CNN_model
-
-trials = [
-    "without_individuals/pic_e_close_motion",
-    "without_individuals/pic_e_close_noun",
-    "without_individuals/pic_e_open_motion",
-    "without_individuals/pic_e_open_noun",
-    "without_individuals/imagination",
-    ]
-
-paras = [16, 8, 4, 4]
-
-
-for trial in trials:
-    # Get the last part of the path (the file name) and remove the ".csv" extension
-    trial_name = os.path.splitext(os.path.basename(trial))[0]
-    for i in range(4):
-        if paras[i] == 4 and i == 2:
-            model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Beta')
-        elif paras[i] == 4 and i == 3:
-            model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Alpha')
-        else:
-            model, acc = train_CNN_model(trial, number_parameters=paras[i])
-        
-        print(f"Trial and parameters: {trial_name} with {paras[i]} parameters.")
-        print("Accuracy:", acc, "\n\n")
-
-#print("-" * 50, "\n\n")  # print a separator line
