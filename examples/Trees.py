@@ -94,8 +94,17 @@ def train_gb_model(trial, number_parameters=16, freq_range='Beta'):
     
     return model, accuracy, label_encoder
 
+def predict_extra_trees_model(model, scaler, label_encoder, features_for_model):
+    features_for_model_normalized = scaler.transform(features_for_model)
+    y_pred = model.predict(features_for_model_normalized)
+    y_pred_labels = label_encoder.inverse_transform(y_pred)
+    return y_pred_labels
 
-
+def predict_gb_model(model, scaler, label_encoder, features_for_model):
+    features_for_model_normalized = scaler.transform(features_for_model)
+    y_pred = model.predict(features_for_model_normalized)
+    y_pred_labels = label_encoder.inverse_transform(y_pred)
+    return y_pred_labels
 
 
 if __name__ == "__main__":
