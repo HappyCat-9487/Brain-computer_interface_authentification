@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import ExtraTreesClassifier, GradientBoostingClassifier
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score
 
 class TreesModel:
     def __init__(self, trial, n_estimators=100, number_parameters=16, freq_range='Beta'):
@@ -19,6 +20,7 @@ class TreesModel:
         self.y = self.label_encoder.fit_transform(self.y)
         self.scaler = MinMaxScaler()
         self.X_train, self.X_val, self.y_train, self.y_val = self.split_and_scale_data()
+ 
         
     def prepare_data(self):
         if self.number_parameters == 16:
@@ -39,25 +41,45 @@ class TreesModel:
         y = self.data['Image'].values
         return X, y
 
+
     def split_and_scale_data(self):
         X_train, X_val, y_train, y_val = train_test_split(self.X, self.y, test_size=0.2, random_state=42)
         X_train_normalized = self.scaler.fit_transform(X_train)
         X_val_normalized = self.scaler.transform(X_val)
         return X_train_normalized, X_val_normalized, y_train, y_val
 
+
     def train_extra_trees(self):
         model = ExtraTreesClassifier(n_estimators=self.n_estimators, random_state=42)
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_val)
+        y_score = model.predict_proba(self.X_val)
+        
         accuracy = accuracy_score(self.y_val, y_pred)
-        return model, accuracy
+        confusion = confusion_matrix(self.y_val, y_pred)
+        precision = precision_score(self.y_val, y_pred, average='weighted')
+        recall = recall_score(self.y_val, y_pred, average='weighted')
+        f1 = f1_score(self.y_val, y_pred, average='weighted')
+        roc_auc = roc_auc_score(self.y_val, y_score, multi_class='ovr')
+        
+        return model, accuracy, confusion, precision, recall, f1, roc_auc
+
 
     def train_gb(self):
         model = GradientBoostingClassifier(n_estimators=self.n_estimators, learning_rate=0.1, max_depth=3, random_state=42)
         model.fit(self.X_train, self.y_train)
         y_pred = model.predict(self.X_val)
+        y_score = model.predict_proba(self.X_val)
+        
         accuracy = accuracy_score(self.y_val, y_pred)
-        return model, accuracy
+        confusion = confusion_matrix(self.y_val, y_pred)
+        precision = precision_score(self.y_val, y_pred, average='weighted')
+        recall = recall_score(self.y_val, y_pred, average='weighted')
+        f1 = f1_score(self.y_val, y_pred, average='weighted')
+        roc_auc = roc_auc_score(self.y_val, y_score, multi_class='ovr')
+        
+        return model, accuracy, confusion, precision, recall, f1, roc_auc
+
 
     def predict(self, model, features_for_model):
         features_for_model_normalized = self.scaler.transform(features_for_model)

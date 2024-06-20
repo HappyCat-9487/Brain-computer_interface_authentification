@@ -55,6 +55,7 @@ class RandomForestModel:
         
         # Evaluate the model
         y_pred = self.model.predict(X_val_normalized)
+        y_score = self.model.predict_proba(X_val_normalized)
         
         #The evluation in different ways
         accuracy = accuracy_score(y_val, y_pred)
@@ -62,7 +63,7 @@ class RandomForestModel:
         precision = precision_score(y_val, y_pred, average='weighted')
         recall = recall_score(y_val, y_pred, average='weighted')
         f1 = f1_score(y_val, y_pred, average='weighted')
-        roc_auc = roc_auc_score(y_val, y_pred, multi_class='ovr')
+        roc_auc = roc_auc_score(y_val, y_score, multi_class='ovr')
         
         return accuracy, confusion, precision, recall, f1, roc_auc
    
@@ -90,7 +91,7 @@ if __name__ == "__main__":
     
     for trial in trials:
         rf_model = RandomForestModel(n_estimators=100)
-
+        
         # Get the last part of the path (file name) and remove the ".csv" extension
         trial_name = os.path.splitext(os.path.basename(trial))[0]
 
@@ -100,4 +101,7 @@ if __name__ == "__main__":
             else:
                 acc, confusion, precision, recall, f1, roc_auc = rf_model.train(trial, number_parameters=paras[i])
             print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}, ROC AUC: {roc_auc}")
+            print("\n")
+        print('-'* 30)
+    print('-'* 50)
     
