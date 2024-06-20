@@ -4,6 +4,7 @@ from sklearn.preprocessing import MinMaxScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score
 
 class RandomForestModel:
     def __init__(self, n_estimators=100):
@@ -54,10 +55,18 @@ class RandomForestModel:
         
         # Evaluate the model
         y_pred = self.model.predict(X_val_normalized)
-        accuracy = accuracy_score(y_val, y_pred)
         
-        return accuracy
-
+        #The evluation in different ways
+        accuracy = accuracy_score(y_val, y_pred)
+        confusion = confusion_matrix(y_val, y_pred)
+        precision = precision_score(y_val, y_pred, average='weighted')
+        recall = recall_score(y_val, y_pred, average='weighted')
+        f1 = f1_score(y_val, y_pred, average='weighted')
+        roc_auc = roc_auc_score(y_val, y_pred, multi_class='ovr')
+        
+        return accuracy, confusion, precision, recall, f1, roc_auc
+   
+    
     def predict(self, X_new):
         # Normalize features (scale between 0 and 1)
         X_new_normalized = self.scaler.transform(X_new)
@@ -87,8 +96,8 @@ if __name__ == "__main__":
 
         for i in range(4):
             if paras[i] == 4 and i == 2:
-                acc = rf_model.train(trial, number_parameters=paras[i], freq_range='Alpha')
+                acc, confusion, precision, recall, f1, roc_auc = rf_model.train(trial, number_parameters=paras[i], freq_range='Alpha')
             else:
-                acc = rf_model.train(trial, number_parameters=paras[i])
-            print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
+                acc, confusion, precision, recall, f1, roc_auc = rf_model.train(trial, number_parameters=paras[i])
+            print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}, ROC AUC: {roc_auc}")
     

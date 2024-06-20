@@ -9,6 +9,7 @@ from cnn_model import train_CNN_model
 from randomForest import RandomForestModel
 from Trees import TreesModel
 from fully_connected_model import train_FC_model
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score
 
 #%%
 #Check the distribution of the data in different situations, separating the data by "Image"
