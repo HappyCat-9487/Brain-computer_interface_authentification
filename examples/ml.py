@@ -33,6 +33,7 @@ from sklearn.metrics import accuracy_score
 import pandas as pd
 import numpy as np
 import os
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score
 
 #Just for checking if the data have some works
 def check_if_data_works(base_dir):
@@ -84,11 +85,17 @@ def train_svmm_model(trial, number_parameters=16, freq_range='Beta', kernel='rbf
 
     # Making predictions on the validation set
     predictions = svm_classifier.predict(X_val_normalized)
-
-    # Calculating accuracy
+    y_score = svm_classifier.predict_proba(X_val)
+    
+    # Calculating metrics
     accuracy = accuracy_score(y_val, predictions)
+    confusion = confusion_matrix(y_val, predictions)
+    precision = precision_score(y_val, predictions, average='weighted')
+    recall = recall_score(y_val, predictions, average='weighted')
+    f1 = f1_score(y_val, predictions, average='weighted')
+    roc_auc = roc_auc_score(y_val, y_score, multi_class='ovr')
 
-    return svm_classifier, scaler, accuracy
+    return svm_classifier, scaler, accuracy, confusion, precision, recall, f1, roc_auc
 
 # Remember to replace X and y with your actual feature and label data. 
 # Also, feel free to adjust the SVM parameters (kernel, C, etc.) and explore different kernels (e.g., 'linear', 'poly', 'rbf') to find the best model for your data.
