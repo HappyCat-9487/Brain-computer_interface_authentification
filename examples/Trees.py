@@ -87,6 +87,7 @@ class TreesModel:
         y_pred_labels = self.label_encoder.inverse_transform(y_pred)
         return y_pred_labels
 
+
 if __name__ == "__main__":
     trials = [
         "without_individuals/pic_e_close_motion",
@@ -107,8 +108,9 @@ if __name__ == "__main__":
                 trainer = TreesModel(trial, number_parameters=paras[i], freq_range='Beta')
             else:
                 trainer = TreesModel(trial, number_parameters=paras[i])
-            model, acc = trainer.train_extra_trees()
-            print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
+            model, acc, confusion, precision, recall, f1, roc_auc = trainer.train_extra_trees()
+            print(f"{trial_name} with {paras[i]} parameters => Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}, ROC AUC: {roc_auc}")
+            print("\n")
         
         print("-" * 50, "\n\n Gradient Boosting \n\n", "-" * 50, "\n\n")    
         
@@ -117,5 +119,6 @@ if __name__ == "__main__":
                 trainer = TreesModel(trial, number_parameters=paras[i], freq_range='Beta')
             else:
                 trainer = TreesModel(trial, number_parameters=paras[i])
-            model, acc = trainer.train_gb()
-            print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
+            model, acc, confusion, precision, recall, f1, roc_auc = trainer.train_gb()
+            print(f"{trial_name} with {paras[i]} parameters => Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}, ROC AUC: {roc_auc}")
+            print("\n")

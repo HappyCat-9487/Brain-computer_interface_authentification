@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score
 
 class FullyConnectedModel(nn.Module):
     def __init__(self, input_size=16):
@@ -96,9 +97,24 @@ def train_FC_model(trial, number_parameters=16, freq_range='Beta', epochs=10, ba
         outputs = model(X_val_tensor)
         _, predicted = torch.max(outputs, 1)
         _, y_val_classes = torch.max(y_val_tensor, 1)
+        
+        #Calculate the metrics
         accuracy = (predicted == y_val_classes).sum().item() / len(y_val_classes)
+        confusion = confusion_matrix(y_val_classes, predicted)
+        precision = precision_score(y_val_classes, predicted, average='macro', zero_division=1)
+        recall = recall_score(y_val_classes, predicted, average='macro')
+        f1 = f1_score(y_val_classes, predicted, average='macro')
+        
+        # For ROC AUC, we need the probabilities and the one-hot encoded ground truth
+        if len(y_val_tensor[0]) > 2:
+            # Suitable for multi-class classification
+            roc_auc = roc_auc_score(y_val_tensor.numpy(), outputs.numpy(), average='macro', multi_class='ovr')
+        else:
+            # Suitable for binary classification
+            roc_auc = roc_auc_score(y_val_tensor.numpy(), outputs.numpy()[:, 1])
+        
+    return model, accuracy, confusion, precision, recall, f1, roc_auc
     
-    return model, accuracy
 
 def predict_with_fc_model(fc_model, features_for_model):
     features_for_model = features_for_model.reshape(features_for_model.shape[0], features_for_model.shape[1])
@@ -121,7 +137,7 @@ if __name__ == "__main__":
 
     for i in range(4):
         if paras[i] == 4 and i == 2:
-            fc_model, acc = train_FC_model(trial, number_parameters=paras[i], freq_range='Alpha')
+            fc_model, acc, confusion, precision, recall, f1, roc_auc = train_FC_model(trial, number_parameters=paras[i], freq_range='Alpha')
         else:
-            fc_model, acc = train_FC_model(trial, number_parameters=paras[i])
-        print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
+            fc_model, acc, confusion, precision, recall, f1, roc_auc = train_FC_model(trial, number_parameters=paras[i])
+        print(f"{trial_name} with {paras[i]} parameters => Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}, ROC AUC: {roc_auc}")

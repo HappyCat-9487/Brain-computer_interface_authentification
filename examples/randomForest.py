@@ -65,7 +65,7 @@ class RandomForestModel:
         f1 = f1_score(y_val, y_pred, average='weighted')
         roc_auc = roc_auc_score(y_val, y_score, multi_class='ovr')
         
-        return accuracy, confusion, precision, recall, f1, roc_auc
+        return self.model, accuracy, confusion, precision, recall, f1, roc_auc
    
     
     def predict(self, X_new):
@@ -91,17 +91,17 @@ if __name__ == "__main__":
     
     for trial in trials:
         rf_model = RandomForestModel(n_estimators=100)
-        
+
         # Get the last part of the path (file name) and remove the ".csv" extension
         trial_name = os.path.splitext(os.path.basename(trial))[0]
 
         for i in range(4):
             if paras[i] == 4 and i == 2:
-                acc, confusion, precision, recall, f1, roc_auc = rf_model.train(trial, number_parameters=paras[i], freq_range='Alpha')
+                model, acc, confusion, precision, recall, f1, roc_auc = rf_model.train(trial, number_parameters=paras[i], freq_range='Alpha')
             else:
-                acc, confusion, precision, recall, f1, roc_auc = rf_model.train(trial, number_parameters=paras[i])
-            print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}, ROC AUC: {roc_auc}")
+                model, acc, confusion, precision, recall, f1, roc_auc = rf_model.train(trial, number_parameters=paras[i])
+            print(f"{trial_name} with {paras[i]} parameters => Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}, ROC AUC: {roc_auc}")
             print("\n")
-        print('-'* 30)
-    print('-'* 50)
+        print('-'* 50)
+    
     

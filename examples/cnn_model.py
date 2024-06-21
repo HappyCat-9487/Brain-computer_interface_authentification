@@ -6,6 +6,8 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score
+
 
 class CNNModel(nn.Module):
     def __init__(self, input_size=16):
@@ -102,9 +104,24 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
         outputs = model(X_val_tensor)
         _, predicted = torch.max(outputs, 1)
         _, y_val_classes = torch.max(y_val_tensor, 1)
+        
+        #Calculate the metrics
         accuracy = (predicted == y_val_classes).sum().item() / len(y_val_classes)
-    
-    return model, accuracy
+        confusion = confusion_matrix(y_val_classes, predicted)
+        precision = precision_score(y_val_classes, predicted, average='macro', zero_division=1)
+        recall = recall_score(y_val_classes, predicted, average='macro')
+        f1 = f1_score(y_val_classes, predicted, average='macro')
+        
+        # For ROC AUC, we need the probabilities and the one-hot encoded ground truth
+        if len(y_val_tensor[0]) > 2:
+            # Suitable for multi-class classification
+            roc_auc = roc_auc_score(y_val_tensor.numpy(), outputs.numpy(), average='macro', multi_class='ovr')
+        else:
+            # Suitable for binary classification
+            roc_auc = roc_auc_score(y_val_tensor.numpy(), outputs.numpy()[:, 1])
+        
+        
+    return model, accuracy, confusion, precision, recall, f1, roc_auc
 
 
 #todo: modify the predict function
@@ -119,6 +136,7 @@ def predict_with_cnn_model(cnn_model, features_for_model):
         _, predicted = torch.max(outputs, 1)
     return predicted
 
+
 if __name__ == "__main__":
     trial = "without_individuals/pic_e_close_motion"
 
@@ -128,8 +146,8 @@ if __name__ == "__main__":
     trial_name = os.path.splitext(os.path.basename(trial))[0]
 
     for i in range(4):
-        if paras[i] == 4 and i == 2:
-            cnn_model, acc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Alpha')
+        if paras[i] == 4 and i == 3:
+            cnn_model, acc, confusion, precision, recall, f1, roc_auc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Alpha')
         else:
-            cnn_model, acc = train_CNN_model(trial, number_parameters=paras[i])
-        print(f"Accuracy for {trial_name} with {paras[i]} parameters: {acc}")
+            cnn_model, acc, confusion, precision, recall, f1, roc_auc = train_CNN_model(trial, number_parameters=paras[i])
+        print(f"{trial_name} with {paras[i]} parameters => Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}, ROC AUC: {roc_auc}")
