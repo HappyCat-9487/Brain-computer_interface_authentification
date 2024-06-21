@@ -78,7 +78,7 @@ def train_svmm_model(trial, number_parameters=16, freq_range='Beta', kernel='rbf
 
 
     # Initializing SVM classifier (you can experiment with different kernels and parameters)
-    svm_classifier = SVC(kernel=kernel, C=C, gamma=gamma)  # Example with RBF kernel
+    svm_classifier = SVC(kernel=kernel, C=C, gamma=gamma, probability=True)  # Example with RBF kernel
 
     # Training the SVM model
     svm_classifier.fit(X_train_normalized, y_train)

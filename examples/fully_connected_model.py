@@ -9,11 +9,11 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score
 
 class FullyConnectedModel(nn.Module):
-    def __init__(self, input_size=16):
+    def __init__(self, input_size=16, num_classes=6):
         super(FullyConnectedModel, self).__init__()
         self.fc1 = nn.Linear(input_size, 64)
         self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, 6)
+        self.fc3 = nn.Linear(32, num_classes)
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
@@ -75,7 +75,7 @@ def train_FC_model(trial, number_parameters=16, freq_range='Beta', epochs=10, ba
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     
     # Our Fully Connected model
-    model = FullyConnectedModel(input_size=number_parameters)
+    model = FullyConnectedModel(input_size=number_parameters, num_classes=y_train.shape[1])
 
     # Define the loss function and optimizer
     loss_fn = nn.CrossEntropyLoss()
@@ -105,8 +105,14 @@ def train_FC_model(trial, number_parameters=16, freq_range='Beta', epochs=10, ba
         recall = recall_score(y_val_classes, predicted, average='macro')
         f1 = f1_score(y_val_classes, predicted, average='macro')
         
+        
+        # Debug: Print the shapes of the tensors
+        #print("outputs shape:", outputs.shape)
+        #print("y_val_tensor shape:", y_val_tensor.shape)
+        
+        
         # For ROC AUC, we need the probabilities and the one-hot encoded ground truth
-        if len(y_val_tensor[0]) > 2:
+        if y_val_tensor.shape[1] > 2:
             # Suitable for multi-class classification
             roc_auc = roc_auc_score(y_val_tensor.numpy(), outputs.numpy(), average='macro', multi_class='ovr')
         else:

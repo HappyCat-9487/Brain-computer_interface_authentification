@@ -10,13 +10,13 @@ from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_
 
 
 class CNNModel(nn.Module):
-    def __init__(self, input_size=16):
+    def __init__(self, input_size=16, num_classes=6):
         super(CNNModel, self).__init__()
         self.conv1 = nn.Conv1d(1, 64, kernel_size=3, stride=1, padding=1)
         self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
         self.conv2 = nn.Conv1d(64, 32, kernel_size=3, stride=1, padding=1)
         self.fc1 = nn.Linear(32 * (input_size//4), 32)
-        self.fc2 = nn.Linear(32, 6)
+        self.fc2 = nn.Linear(32, num_classes)
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
@@ -24,7 +24,7 @@ class CNNModel(nn.Module):
         x = self.pool(F.relu(self.conv2(x)))
         x = x.view(-1, 32 * x.size(2))
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        x = self.fc2(x)
         x = self.softmax(x)
         return x
 
@@ -82,7 +82,7 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     
     # Our CNN model
-    model = CNNModel(input_size=number_parameters)
+    model = CNNModel(input_size=number_parameters, num_classes=y_train.shape[1])
 
     # Define the loss function and optimizer
     loss_fn = nn.CrossEntropyLoss()
@@ -112,8 +112,12 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
         recall = recall_score(y_val_classes, predicted, average='macro')
         f1 = f1_score(y_val_classes, predicted, average='macro')
         
+        # Debug: Print the shapes of the tensors
+        #print("outputs shape:", outputs.shape)
+        #print("y_val_tensor shape:", y_val_tensor.shape)
+        
         # For ROC AUC, we need the probabilities and the one-hot encoded ground truth
-        if len(y_val_tensor[0]) > 2:
+        if y_val_tensor.shape[1] > 2:
             # Suitable for multi-class classification
             roc_auc = roc_auc_score(y_val_tensor.numpy(), outputs.numpy(), average='macro', multi_class='ovr')
         else:
