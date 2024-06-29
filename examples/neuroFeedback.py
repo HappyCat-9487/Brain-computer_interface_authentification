@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     # Compute the number of epochs in "buffer_length"
     n_win_test = int(np.floor((BUFFER_LENGTH - EPOCH_LENGTH) /
-                              SHIFT_LENGTH + 1))
+                            SHIFT_LENGTH + 1))
 
     # Initialize the band power buffer (for plotting)
     # bands will be ordered: [delta, theta, alpha, beta]

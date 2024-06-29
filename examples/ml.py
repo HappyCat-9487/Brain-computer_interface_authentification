@@ -87,9 +87,11 @@ def train_svmm_model(trial, number_parameters=16, freq_range='Beta', kernel='rbf
     predictions = svm_classifier.predict(X_val_normalized)
     y_score = svm_classifier.predict_proba(X_val)
     
+    classes = np.sort(np.unique(y_val))
+    
     # Calculating metrics
     accuracy = accuracy_score(y_val, predictions)
-    confusion = confusion_matrix(y_val, predictions)
+    confusion = confusion_matrix(y_val, predictions, labels=classes)
     precision = precision_score(y_val, predictions, average='weighted')
     recall = recall_score(y_val, predictions, average='weighted')
     f1 = f1_score(y_val, predictions, average='weighted')

@@ -6,8 +6,9 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, TensorDataset
-from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, roc_auc_score
-
+from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, precision_recall_curve
+from sklearn.metrics import accuracy_score, ConfusionMatrixDisplay
+from matplotlib import pyplot as plt
 
 class CNNModel(nn.Module):
     def __init__(self, input_size=16, num_classes=6):
@@ -105,9 +106,11 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
         _, predicted = torch.max(outputs, 1)
         _, y_val_classes = torch.max(y_val_tensor, 1)
         
+        classes = torch.unique(y_val_classes)
+        
         #Calculate the metrics
         accuracy = (predicted == y_val_classes).sum().item() / len(y_val_classes)
-        confusion = confusion_matrix(y_val_classes, predicted)
+        confusion = confusion_matrix(y_val_classes, predicted, labels=classes.numpy())
         precision = precision_score(y_val_classes, predicted, average='macro', zero_division=1)
         recall = recall_score(y_val_classes, predicted, average='macro')
         f1 = f1_score(y_val_classes, predicted, average='macro')
@@ -116,16 +119,14 @@ def train_CNN_model(trial, number_parameters=16, freq_range='Beta', epochs=10, b
         #print("outputs shape:", outputs.shape)
         #print("y_val_tensor shape:", y_val_tensor.shape)
         
-        # For ROC AUC, we need the probabilities and the one-hot encoded ground truth
-        if y_val_tensor.shape[1] > 2:
-            # Suitable for multi-class classification
-            roc_auc = roc_auc_score(y_val_tensor.numpy(), outputs.numpy(), average='macro', multi_class='ovr')
-        else:
-            # Suitable for binary classification
-            roc_auc = roc_auc_score(y_val_tensor.numpy(), outputs.numpy()[:, 1])
+        # Compute precision-recall curve for each class
+        precision_recall = {}
+        for i in range(len(classes)):
+            precision_p, recall_p, _ = precision_recall_curve(y_val_tensor[:, i], outputs[:, i])
+            precision_recall[classes[i].item()] = (precision_p, recall_p)
         
         
-    return model, accuracy, confusion, precision, recall, f1, roc_auc
+    return model, accuracy, confusion, precision, recall, f1, precision_recall, classes
 
 
 #todo: modify the predict function
@@ -151,7 +152,26 @@ if __name__ == "__main__":
 
     for i in range(4):
         if paras[i] == 4 and i == 3:
-            cnn_model, acc, confusion, precision, recall, f1, roc_auc = train_CNN_model(trial, number_parameters=paras[i], freq_range='Alpha')
+            cnn_model, acc, confusion, precision, recall, f1, precision_recall, classes = train_CNN_model(trial, number_parameters=paras[i], freq_range='Alpha')
         else:
-            cnn_model, acc, confusion, precision, recall, f1, roc_auc = train_CNN_model(trial, number_parameters=paras[i])
-        print(f"{trial_name} with {paras[i]} parameters => Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}, ROC AUC: {roc_auc}")
+            cnn_model, acc, confusion, precision, recall, f1, precision_recall, classes = train_CNN_model(trial, number_parameters=paras[i])
+        print(f"{trial_name} with {paras[i]} parameters => Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}")
+        
+        # Plot confusion matrix
+        disp = ConfusionMatrixDisplay(confusion_matrix=confusion, display_labels=[f'class {int(cls)}' for cls in classes])
+        disp.plot()
+        plt.title(f"Confusion Matrix for {trial_name} with {paras[i]} parameters")
+        plt.xticks(rotation=45)
+        plt.show()
+
+        # Plot precision-recall curves
+        for label, (precision, recall) in precision_recall.items():
+            plt.plot(recall, precision, lw=2, label=f'class {label}')
+        
+        plt.xlabel("Recall")
+        plt.ylabel("Precision")
+        plt.legend(loc="best")
+        plt.title(f"Precision-Recall Curve for {trial_name} with {paras[i]} parameters")
+        plt.show()
+        
+        print("\n")

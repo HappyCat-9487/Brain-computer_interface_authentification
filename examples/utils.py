@@ -82,7 +82,7 @@ def compute_band_powers(eegdata, fs):
 
     NFFT = nextpow2(winSampleLength)
     Y = np.fft.fft(dataWinCenteredHam, n=NFFT, axis=0) / winSampleLength
-    PSD = 2 * np.abs(Y[0:int(NFFT / 2), :])   #為何沒有平方Ｙ，計算PSD不是要平方嗎？
+    PSD = 2 * np.abs(Y[0:int(NFFT / 2), :])   # With the convenience the PSD is without squared
     f = fs / 2 * np.linspace(0, 1, int(NFFT / 2))
 
     # SPECTRAL FEATURES

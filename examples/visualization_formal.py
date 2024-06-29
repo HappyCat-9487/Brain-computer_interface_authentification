@@ -1,4 +1,3 @@
-#%%
 import pandas as pd
 import matplotlib.pyplot as plt
 import glob
@@ -12,80 +11,6 @@ from fully_connected_model import train_FC_model
 import matplotlib.pyplot as plt
 import numpy as np
 
-#%%
-#Check the distribution of the data in different situations, separating the data by "Image"
-file_paths = glob.glob('../dataset/without_individuals/*.csv', recursive=True)
-
-for file_path in file_paths:
-    df = pd.read_csv(file_path)
-    plt.figure(figsize=(10, 6))
-    plt.hist(df['Image'], bins=30, alpha=0.5)
-    plt.title('Distribution of "Image" in ' + file_path)
-    plt.xlabel('Image')
-    plt.ylabel('The numbers of Image')
-    plt.show()
-
-#%%
-
-#Check the average values for different channels of the data by separating the data by "Image"
-file_paths = glob.glob('../dataset/without_individuals/*.csv', recursive=True)
-
-for file_path in file_paths:
-    df = pd.read_csv(file_path)
-    df['Image'] = df['Image'].astype('category')
-    image_data = df.groupby("Image", observed=True).mean().round(2)
-    print(file_path)
-
-    csv_name = os.path.splitext(os.path.basename(file_path))[0]
-    image_data = image_data.transpose()
-    for column in image_data.columns:
-        plt.scatter(image_data.index, image_data[column], label=column)
-
-    plt.title('Average values for ' + csv_name)
-    plt.xticks(rotation=45)
-    plt.xlabel('Different Waves of categories and sensors')
-    plt.ylabel('Average value')
-
-    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    plt.show()
-    
-#%%
-#Check the average and the standard deviation values for different channels of the data by separating the data by "Image"
-#Recommend not run this code
-for file_path in file_paths:
-    df = pd.read_csv(file_path)
-    df['Image'] = df['Image'].astype('category')
-    
-    image_mean = df.groupby("Image", observed=True).mean().round(2)
-    image_std = df.groupby("Image", observed=True).std().round(2)
-    
-    csv_name = os.path.splitext(os.path.basename(file_path))[0]
-    
-    for column in image_mean.columns:
-        plt.figure(figsize=(10, 6))
-        plt.scatter(image_mean.index, image_mean[column], label='Mean')
-        plt.scatter(image_std.index, image_std[column], label='Std')
-        plt.title('Mean and Std values for ' + column + ' in ' + csv_name)
-        plt.xticks(rotation=45)
-        plt.xlabel('Image')
-        plt.ylabel('Value')
-        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-        plt.show()
-
-        plt.figure(figsize=(10, 6))
-        sns.violinplot(x=df['Image'], y=df[column])
-        plt.title('Violin plot for ' + column + ' in ' + csv_name)
-        plt.xticks(rotation=45)
-        plt.show()
-
-
-
-
-#%%
-
-print("Current working directory:", os.getcwd())
-
-#%%
 
 def plot_confusion_matrix(cm, classes, title='Confusion matrix', cmap=plt.cm.Blues):
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
@@ -122,7 +47,7 @@ def confusion_metrics_analysis(confusion_svm, confusion_cnn, confusion_fc, confu
 
     #print(confusion_matrices)
     
-    '''
+    
     labels_dict = {
         'SVM': confusion_svm[1],
         'CNN': confusion_cnn[1],
@@ -133,13 +58,16 @@ def confusion_metrics_analysis(confusion_svm, confusion_cnn, confusion_fc, confu
     }
     
     # Assuming all confusion matrices have the same class labels
-    classes = labels_dict[model_name]
-    '''
+    #classes = labels_dict[model_name]
+    #print(classes)
     
     for model_name, confusion in confusion_matrices.items():
-        plt.figure(figsize=(10, 7))
-        plot_confusion_matrix(confusion, classes, title=f'Confusion matrix for {model_name}')
-        plt.show()
+        #plt.figure(figsize=(10, 7))
+        print(model_name)
+        print(confusion)
+        print(labels_dict[model_name])
+        #plot_confusion_matrix(confusion, classes, title=f'Confusion matrix for {model_name}')
+        #plt.show()
     
 
 #Check various models performance with the hyperparameters
@@ -222,37 +150,15 @@ def get_analysis(trial, paras):
         
         confusion_metrics_analysis(confusion_svm, confusion_cnn, confusion_fc, confusion_rf, confusion_et, confusion_gb)
 
-#%%
-#Change the path
-os.chdir('/Users/luchengliang/Brain-computer_interface_authentification')
-#print("Current working directory:", os.getcwd())
 
-paras = [16]
+if __name__ == "__main__":
+    #Change the path
+    os.chdir('/Users/luchengliang/Brain-computer_interface_authentification')
+    #print("Current working directory:", os.getcwd())
 
-trial = "without_individuals/imagination"
+    paras = [16]
 
-get_analysis(trial, paras)
+    trial = "without_individuals/imagination"
 
-
-#%%
-#Change the path
-os.chdir('/Users/luchengliang/Brain-computer_interface_authentification')
-#print("Current working directory:", os.getcwd())
-
-
-trials = [
-    "without_individuals/pic_e_close_motion",
-    "without_individuals/pic_e_close_noun",
-    "without_individuals/pic_e_open_motion",
-    "without_individuals/pic_e_open_noun",
-    "without_individuals/imagination",
-    ]
-
-paras = [16, 8, 4, 4]
-
-for trial in trials:
-    
     get_analysis(trial, paras)
-    
-    print("-" * 50, "\n\n")  # print a separator line
-    
+
