@@ -105,14 +105,12 @@ class TreesModel:
 if __name__ == "__main__":
     trials = [
         "without_individuals/pic_e_close_motion",
-        "without_individuals/pic_e_close_noun",
-        "without_individuals/pic_e_open_motion",
-        "without_individuals/pic_e_open_noun",
-        "without_individuals/imagination",
     ]
     
+    paras = [16]
+    
     for trial in tqdm(trials):
-        paras = [16]
+        
         trial_name = os.path.splitext(os.path.basename(trial))[0]
 
         print("-" * 50, "\n\n Extra Trees \n\n", "-" * 50, "\n\n")

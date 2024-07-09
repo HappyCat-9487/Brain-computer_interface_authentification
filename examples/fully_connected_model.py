@@ -9,23 +9,31 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, f1_score, precision_recall_curve
 from sklearn.metrics import ConfusionMatrixDisplay
 from matplotlib import pyplot as plt
+from tqdm import tqdm
 
 class FullyConnectedModel(nn.Module):
-    def __init__(self, input_size=16, num_classes=6):
+    def __init__(self, input_size=16, num_classes=6, hidden_layers=[64, 32]):
         super(FullyConnectedModel, self).__init__()
-        self.fc1 = nn.Linear(input_size, 64)
-        self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, num_classes)
-        self.softmax = nn.Softmax(dim=1)
+        layers = []
+        in_features = input_size
+        
+        for hidden_units in hidden_layers:
+            layers.append(nn.Linear(in_features, hidden_units))
+            layers.append(nn.ReLU())
+            in_features = hidden_units
+        
+        layers.append(nn.Linear(in_features, num_classes))
+        layers.append(nn.Softmax(dim=1))
+        
+        self.fc_layers = nn.Sequential(*layers)
+        
 
     def forward(self, x):
         x = x.view(x.size(0), -1)  # Flatten the input
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.softmax(self.fc3(x))
+        x = self.fc_layers(x)   
         return x
 
-def train_FC_model(trial, number_parameters=16, freq_range='Beta', epochs=10, batch_size=32):
+def train_FC_model(trial, number_parameters=16, freq_range='Beta', epochs=10, batch_size=32, learning_rate=0.001, hidden_layers=[64, 32]):
     
     base_dir = os.getcwd()
     data = pd.read_csv(base_dir + f"/dataset/{trial}.csv") 
@@ -81,7 +89,7 @@ def train_FC_model(trial, number_parameters=16, freq_range='Beta', epochs=10, ba
 
     # Define the loss function and optimizer
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters())
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     # Train the model
     model.train()
@@ -134,36 +142,143 @@ def predict_with_fc_model(fc_model, features_for_model):
         _, predicted = torch.max(outputs, 1)
     return predicted
 
+
+# Plot confusion matrix
+def plot_confusion_matrix(trial_name, paras, batch_size, hidden_layer, learning_rate, epoch, confusion, classes, accuracy, precision, recall, f1):
+    
+    plt.figure(figsize=(9, 8))
+    disp = ConfusionMatrixDisplay(confusion_matrix=confusion, display_labels=[f'class {int(cls)}' for cls in classes])
+    disp.plot()
+    plt.suptitle(f"Confusion Matrix: {trial_name}", y=0.98, color='black', fontsize=12, ha='center')
+    plt.title(f"parameters: {paras} ,  batch size: {batch_size}, h_layers: {hidden_layer} ,\n lr: {learning_rate}, epoch: {epoch}", fontsize=8, pad=15, ha='center')
+    
+    plt.xticks(rotation=45)
+    
+    # Adjust the subplot to make space for the stats text
+    plt.subplots_adjust(left=0.3, right=0.95, top=0.95, bottom=0.1)
+    
+    # Add accuracy, precision, recall, f1 to the plot
+    stats_text = f"Accuracy: {accuracy:.2f}\nPrecision: {precision:.2f}\nRecall: {recall:.2f}\nF1 Score: {f1:.2f}"
+    plt.text(-0.6, 0.98, stats_text, transform=plt.gca().transAxes, fontsize=12, verticalalignment='top', bbox=dict(boxstyle='round', alpha=0.1))
+    
+    # Save the plot to the "plots" folder
+    save_dir = "/Users/luchengliang/Brain-computer_interface_authentification/plots/fc"
+    os.makedirs(save_dir, exist_ok=True)
+    plt.tight_layout()
+    
+    hidden_layers_str = '_'.join(str(x) for x in hidden_layer)
+    filename = f"{trial_name}_{paras}_{batch_size}_{hidden_layers_str}_{learning_rate}_{epoch}_confusion_matrix.png"
+    plt.savefig(os.path.join(save_dir, filename))
+    #plt.show()
+    
+
+
+# Plot precision-recall curves
+def plot_precision_recall_curve(precision_recall, trial_name, paras, batch_size, hidden_layer, learning_rate, epoch, accuracy, precision, recall, f1):
+   
+    plt.figure(figsize=(13, 8))
+    for label, (precision_p, recall_p) in precision_recall.items():
+            plt.plot(recall_p, precision_p, lw=2, label=f'class {label}')
+        
+    plt.xlabel("Recall")
+    plt.ylabel("Precision")
+    plt.legend(loc="best")
+    plt.suptitle(f"Precision-Recall Curve for {trial_name}", y=0.95, color='black', fontsize=12, ha='center')
+    plt.title(f"parameters: {paras}, batch size: {batch_size}, h_layers: {hidden_layer},\n lr: {learning_rate}, epoch: {epoch}", fontsize=10, pad=20, ha='center')
+    
+    # Adjust the subplot to make space for the stats text
+    plt.subplots_adjust(left=0.3, right=0.95, top=0.85, bottom=0.1)
+    
+    # Add accuracy, precision, recall, f1 to the plot
+    stats_text = f"Accuracy: {accuracy:.2f}\nPrecision: {precision:.2f}\nRecall: {recall:.2f}\nF1 Score: {f1:.2f}"
+    plt.text(-0.2, 0.98, stats_text, transform=plt.gca().transAxes, fontsize=12, verticalalignment='top', bbox=dict(boxstyle='round', alpha=0.1))
+    
+    # Save the plot to the "plots" folder
+    save_dir = "/Users/luchengliang/Brain-computer_interface_authentification/plots/fc"
+    os.makedirs(save_dir, exist_ok=True)
+    
+    hidden_layers_str = '_'.join(str(x) for x in hidden_layer)
+    filename = f"{trial_name}_{paras}_{batch_size}_{hidden_layers_str}_{learning_rate}_{epoch}_precision_recall_curve.png"
+    plt.savefig(os.path.join(save_dir, filename))
+    #plt.show()
+
+
+
 if __name__ == "__main__":
-    trial = "without_individuals/pic_e_close_motion"  # Added .csv to match file reading
+    
+    trials = [
+        "without_individuals/pic_e_close_motion",
+        "without_individuals/pic_e_close_noun",
+        "without_individuals/pic_e_open_motion",
+        "without_individuals/pic_e_open_noun",
+        "without_individuals/imagination",
+    ]
 
+    
     paras = [16, 8, 4, 4]
+    batch_sizes = [32, 64]
+    epochs = [200, 300, 500]
+    learning_rates = [0.001, 0.01, 0.1]
+    hidden_layers = [[256, 128, 64, 32], [32, 64, 128, 256, 128, 64, 32], [32, 64, 128, 256, 256, 128, 64, 32],
+                     [128, 64, 32], [32, 64, 128, 64, 32], [32, 64, 128, 128, 64, 32],
+                     [64, 32], [32, 64, 32], [32, 64, 64, 32],
+                     [32, 32]]
+    best_params = {}
+    
+    for trial in tqdm(trials):
+        # Get the last part of the path (the file name) and remove the ".csv" extension
+        trial_name = os.path.splitext(os.path.basename(trial))[0]
+        best_score = -1  # Initialize with a low value
+        best_params[trial_name] = None
+        
 
-    # Get the last part of the path (the file name) and remove the ".csv" extension
-    trial_name = os.path.splitext(os.path.basename(trial))[0]
-
-    for i in range(len(paras)):
-        if paras[i] == 4 and i == 2:
-            fc_model, acc, confusion, precision, recall, f1, precision_recall, classes = train_FC_model(trial, number_parameters=paras[i], freq_range='Alpha')
-        else:
-            fc_model, acc, confusion, precision, recall, f1, precision_recall, classes = train_FC_model(trial, number_parameters=paras[i])
-        print(f"{trial_name} with {paras[i]} parameters => Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}")
-
+        for epoch in tqdm(epochs):
+            for learning_rate in tqdm(learning_rates):
+                for hidden_layer in tqdm(hidden_layers):
+                    for batch_size in tqdm(batch_sizes):
+                        for i in range(len(paras)):
+                            if paras[i] == 4 and i == 2:
+                                fc_model, acc, confusion, precision, recall, f1, precision_recall, classes = train_FC_model(trial, number_parameters=paras[i], freq_range='Alpha', 
+                                                                                                                            epochs=epoch, batch_size=batch_size, learning_rate=learning_rate, 
+                                                                                                                            hidden_layers=hidden_layer)
+                            else:
+                                fc_model, acc, confusion, precision, recall, f1, precision_recall, classes = train_FC_model(trial, number_parameters=paras[i], 
+                                                                                                                            epochs=epoch, batch_size=batch_size, learning_rate=learning_rate, 
+                                                                                                                            hidden_layers=hidden_layer)
+                            
+                            # Composite score
+                            score = 0.6 * f1 + 0.4 * acc
+                            
+                            if score > best_score:
+                                best_score = score
+                                best_params[trial_name] = {
+                                    "params": paras[i],
+                                    "batch_size": batch_size,
+                                    "hidden_layers": hidden_layer,
+                                    "learning_rate": learning_rate,
+                                    "epochs": epoch,
+                                    "model": fc_model,
+                                    "confusion": confusion,
+                                    "classes": classes,
+                                    "precision_recall": precision_recall,
+                                    "accuracy": acc,
+                                    "precision": precision,
+                                    "recall": recall,
+                                    "f1": f1,
+                                    "score": score
+                                }
+                                
+        best_trial = best_params[trial_name]
+        print(f"Best params for {trial_name}: {best_trial}")
+        
         # Plot confusion matrix
-        disp = ConfusionMatrixDisplay(confusion_matrix=confusion, display_labels=[f'class {int(cls)}' for cls in classes])
-        disp.plot()
-        plt.title(f"Confusion Matrix for {trial_name} with {paras[i]} parameters")
-        plt.xticks(rotation=45)
-        plt.show()
+        plot_confusion_matrix(
+            trial_name, best_trial["params"], best_trial["batch_size"], best_trial["hidden_layers"], best_trial["learning_rate"], best_trial["epochs"],
+            best_trial["confusion"], best_trial["classes"], best_trial["accuracy"], best_trial["precision"], best_trial["recall"], best_trial["f1"]
+        )
 
         # Plot precision-recall curves
-        for label, (precision, recall) in precision_recall.items():
-            plt.plot(recall, precision, lw=2, label=f'class {label}')
-        
-        plt.xlabel("Recall")
-        plt.ylabel("Precision")
-        plt.legend(loc="best")
-        plt.title(f"Precision-Recall Curve for {trial_name} with {paras[i]} parameters")
-        plt.show()
-        
-        print("\n")
+        plot_precision_recall_curve(
+            best_trial["precision_recall"], trial_name, best_trial["params"], best_trial["batch_size"], best_trial["hidden_layers"], best_trial["learning_rate"], best_trial["epochs"],
+            best_trial["accuracy"], best_trial["precision"], best_trial["recall"], best_trial["f1"]
+        )               

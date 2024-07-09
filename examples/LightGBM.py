@@ -90,7 +90,7 @@ if __name__ == "__main__":
     ]
     
     for trial in tqdm(trials):
-        paras = [16]
+        paras = [16, 8, 4, 4]
         trial_name = os.path.splitext(os.path.basename(trial))[0]
 
         print("-" * 50, "\n\n LightGBM \n\n", "-" * 50, "\n\n")

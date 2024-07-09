@@ -142,11 +142,72 @@ def predict_with_cnn_model(cnn_model, features_for_model):
     return predicted
 
 
+
+def plot_confusion_matrix(trial_name, paras, batch_size, learning_rate, epoch, confusion, classes, accuracy, precision, recall, f1):
+    
+    plt.figure(figsize=(9, 8))
+    disp = ConfusionMatrixDisplay(confusion_matrix=confusion, display_labels=[f'class {int(cls)}' for cls in classes])
+    disp.plot()
+    plt.suptitle(f"Confusion Matrix: {trial_name}", y=0.98, color='black', fontsize=12, ha='center')
+    plt.title(f"parameters: {paras} ,  batch size: {batch_size},\n lr: {learning_rate}, epoch: {epoch}", fontsize=8, pad=15, ha='center')
+    
+    plt.xticks(rotation=45)
+    
+    # Adjust the subplot to make space for the stats text
+    plt.subplots_adjust(left=0.3, right=0.95, top=0.95, bottom=0.1)
+    
+    # Add accuracy, precision, recall, f1 to the plot
+    stats_text = f"Accuracy: {accuracy:.2f}\nPrecision: {precision:.2f}\nRecall: {recall:.2f}\nF1 Score: {f1:.2f}"
+    plt.text(-0.6, 0.98, stats_text, transform=plt.gca().transAxes, fontsize=12, verticalalignment='top', bbox=dict(boxstyle='round', alpha=0.1))
+    
+    # Save the plot to the "plots" folder
+    save_dir = "/Users/luchengliang/Brain-computer_interface_authentification/plots/cnn"
+    os.makedirs(save_dir, exist_ok=True)
+    plt.tight_layout()
+    
+    filename = f"{trial_name}_{paras}_{batch_size}_{learning_rate}_{epoch}_confusion_matrix.png"
+    plt.savefig(os.path.join(save_dir, filename))
+    #plt.show()
+    
+    
+ 
+def plot_precision_recall_curve(precision_recall, trial_name, paras, batch_size, learning_rate, epoch, accuracy, precision, recall, f1):
+   
+    plt.figure(figsize=(13, 8))
+    for label, (precision_p, recall_p) in precision_recall.items():
+            plt.plot(recall_p, precision_p, lw=2, label=f'class {label}')
+        
+    plt.xlabel("Recall")
+    plt.ylabel("Precision")
+    plt.legend(loc="best")
+    plt.suptitle(f"Precision-Recall Curve: {trial_name}", y=0.98, color='black', fontsize=14, ha='center')
+    plt.title(f"parameters: {paras} ,  batch size: {batch_size}, lr: {learning_rate}, epoch: {epoch}", fontsize=8, pad=15, ha='center')
+    
+    # Adjust the subplot to make space for the stats text
+    plt.subplots_adjust(left=0.3, right=0.95, top=0.95, bottom=0.1)
+    
+    # Add accuracy, precision, recall, f1 to the plot
+    stats_text = f"Accuracy: {accuracy:.2f}\nPrecision: {precision:.2f}\nRecall: {recall:.2f}\nF1 Score: {f1:.2f}"
+    plt.text(-0.25, 0.98, stats_text, transform=plt.gca().transAxes, fontsize=10, verticalalignment='top', bbox=dict(boxstyle='round', alpha=0.1))
+    
+    # Save the plot to the "plots" folder
+    save_dir = "/Users/luchengliang/Brain-computer_interface_authentification/plots/cnn"
+    os.makedirs(save_dir, exist_ok=True)
+    plt.tight_layout()
+    
+    filename = f"{trial_name}_{paras}_{batch_size}_{learning_rate}_{epoch}_precision_recall_curve.png"
+    plt.savefig(os.path.join(save_dir, filename))
+    #plt.show()   
+
+
+#TODO: modify the main function to fit the requitements
 if __name__ == "__main__":
     trial = "without_individuals/pic_e_close_motion"
 
     paras = [16, 8, 4, 4]
 
+    best_params = {}
+    
     # Get the last part of the path (the file name) and remove the ".csv" extension
     trial_name = os.path.splitext(os.path.basename(trial))[0]
 
@@ -157,21 +218,39 @@ if __name__ == "__main__":
             cnn_model, acc, confusion, precision, recall, f1, precision_recall, classes = train_CNN_model(trial, number_parameters=paras[i])
         print(f"{trial_name} with {paras[i]} parameters => Accuracy: {acc}, Precision: {precision}, Recall: {recall}, F1: {f1}")
         
-        # Plot confusion matrix
-        disp = ConfusionMatrixDisplay(confusion_matrix=confusion, display_labels=[f'class {int(cls)}' for cls in classes])
-        disp.plot()
-        plt.title(f"Confusion Matrix for {trial_name} with {paras[i]} parameters")
-        plt.xticks(rotation=45)
-        plt.show()
+        # Composite score
+        score = 0.6 * f1 + 0.4 * acc
+        
+        if score > best_score:
+            best_score = score
+            best_params[trial_name] = {
+                "params": paras[i],
+                "batch_size": batch_size,
+                "hidden_layers": hidden_layer,
+                "learning_rate": learning_rate,
+                "epochs": epoch,
+                "model": fc_model,
+                "confusion": confusion,
+                "classes": classes,
+                "precision_recall": precision_recall,
+                "accuracy": acc,
+                "precision": precision,
+                "recall": recall,
+                "f1": f1,
+                "score": score
+            }
+                                
+    best_trial = best_params[trial_name]
+    print(f"Best params for {trial_name}: {best_trial}")
+    
+    # Plot confusion matrix
+    plot_confusion_matrix(
+        trial_name, best_trial["params"], best_trial["batch_size"], best_trial["hidden_layers"], best_trial["learning_rate"], best_trial["epochs"],
+        best_trial["confusion"], best_trial["classes"], best_trial["accuracy"], best_trial["precision"], best_trial["recall"], best_trial["f1"]
+    )
 
-        # Plot precision-recall curves
-        for label, (precision, recall) in precision_recall.items():
-            plt.plot(recall, precision, lw=2, label=f'class {label}')
-        
-        plt.xlabel("Recall")
-        plt.ylabel("Precision")
-        plt.legend(loc="best")
-        plt.title(f"Precision-Recall Curve for {trial_name} with {paras[i]} parameters")
-        plt.show()
-        
-        print("\n")
+    # Plot precision-recall curves
+    plot_precision_recall_curve(
+        best_trial["precision_recall"], trial_name, best_trial["params"], best_trial["batch_size"], best_trial["hidden_layers"], best_trial["learning_rate"], best_trial["epochs"],
+        best_trial["accuracy"], best_trial["precision"], best_trial["recall"], best_trial["f1"]
+    )               

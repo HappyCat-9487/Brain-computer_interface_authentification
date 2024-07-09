@@ -79,21 +79,110 @@ class XGBoostModel:
         y_pred_labels = self.label_encoder.inverse_transform(y_pred)
         return y_pred_labels
 
+    
+# Plot confusion matrix
+def plot_confusion_matrix(trial_name, paras, criterion, n_estimator, confusion, accuracy, precision, recall, f1, labels, nor=False):
+    
+    plt.figure(figsize=(9, 8))
+    disp = ConfusionMatrixDisplay(confusion_matrix=confusion, display_labels=labels)
+    disp.plot()
+    if nor:
+        plt.suptitle(f"Normalized Confusion Matrix: {trial_name}", y=0.98, color='black', fontsize=12, ha='center')
+    else:
+        plt.suptitle(f"Confusion Matrix: {trial_name}", y=0.98, color='black', fontsize=12, ha='center')
+    
+    plt.title(f"parameters: {paras} ,  criterion: {criterion}, \n number of estimators: {n_estimator}", fontsize=8, pad=15, ha='center')
+    plt.xticks(rotation=45)
+    
+    # Adjust the subplot to make space for the stats text
+    plt.subplots_adjust(left=0.3, right=0.95, top=0.95, bottom=0.1)
+    
+    # Add accuracy, precision, recall, f1 to the plot
+    stats_text = f"Accuracy: {accuracy:.2f}\nPrecision: {precision:.2f}\nRecall: {recall:.2f}\nF1 Score: {f1:.2f}"
+    plt.text(-0.9, 0.98, stats_text, transform=plt.gca().transAxes, fontsize=12, verticalalignment='top', bbox=dict(boxstyle='round', alpha=0.1))
+    
+    # Save the plot to the "plots" folder
+    save_dir = "/Users/luchengliang/Brain-computer_interface_authentification/plots/randomforest"
+    os.makedirs(save_dir, exist_ok=True)
+    plt.tight_layout()
+    
+    if nor:
+        filename = f"{trial_name}_{paras}_{criterion}_{n_estimator}_normalized_confusion_matrix.png"
+    else:
+        filename = f"{trial_name}_{paras}_{criterion}_{n_estimator}_confusion_matrix.png"
+    plt.savefig(os.path.join(save_dir, filename))
+    #plt.show()
+    
+
+
+# Plot precision-recall curves
+def plot_precision_recall_curve(precision_recall, trial_name, paras, criterion, n_estimator, classes, accuracy, precision, recall, f1):
+   
+    plt.figure(figsize=(13, 8))
+    for label in classes:
+        plt.plot(precision_recall[label][1], precision_recall[label][0], lw=2, label=f'class {rf_model.label_encoder.inverse_transform([label])[0]}')
+        
+    plt.xlabel("Recall")
+    plt.ylabel("Precision")
+    plt.legend(loc="best")
+    plt.suptitle(f"Precision-Recall Curve for {trial_name}", y=0.95, color='black', fontsize=12, ha='center')
+    plt.title(f"parameters: {paras}, criterion: {criterion}, n_estimator: {n_estimator}", fontsize=10, pad=20, ha='center')
+    
+    # Adjust the subplot to make space for the stats text
+    plt.subplots_adjust(left=0.3, right=0.95, top=0.85, bottom=0.1)
+    
+    # Add accuracy, precision, recall, f1 to the plot
+    stats_text = f"Accuracy: {accuracy:.2f}\nPrecision: {precision:.2f}\nRecall: {recall:.2f}\nF1 Score: {f1:.2f}"
+    plt.text(-0.2, 0.98, stats_text, transform=plt.gca().transAxes, fontsize=12, verticalalignment='top', bbox=dict(boxstyle='round', alpha=0.1))
+    
+    # Save the plot to the "plots" folder
+    save_dir = "/Users/luchengliang/Brain-computer_interface_authentification/plots/randomforest"
+    os.makedirs(save_dir, exist_ok=True)
+    
+    filename = f"{trial_name}_{paras}_{criterion}_{n_estimator}_precision_recall_curve.png"
+    plt.savefig(os.path.join(save_dir, filename))
+    #plt.show()
+
+
+def n_estimator_trend(trial_name, plot_data):
+    # Create a new figure
+    plt.figure(figsize=(10, 8))
+
+    # Plot the data
+    for n_estimator, acc, f1, para, criterion in plot_data:
+        plt.plot(n_estimator, acc, 'o-', label=f'Accuracy ({para}, {criterion})')
+        plt.plot(n_estimator, f1, 'o-',label=f'F1 ({para}, {criterion})')
+        
+
+    # Add labels and a legend
+    plt.xlabel('n_estimator')
+    plt.ylabel('Accuracy and F1 Score')
+    plt.title(f"Trend of n_estimators from {trial_name}", fontsize=12, pad=15, ha='center')
+    
+    # Save the plot to the "plots" folder
+    save_dir = "/Users/luchengliang/Brain-computer_interface_authentification/plots/randomforest"
+    os.makedirs(save_dir, exist_ok=True)
+    
+    filename = f"{trial_name}_trend_of_n_estimators.png"
+    plt.savefig(os.path.join(save_dir, filename))
+    #plt.show()
+
 
 if __name__ == "__main__":
     trials = [
         "without_individuals/pic_e_close_motion",
-        "without_individuals/pic_e_close_noun",
-        "without_individuals/pic_e_open_motion",
-        "without_individuals/pic_e_open_noun",
-        "without_individuals/imagination",
     ]
     
+    paras = [16]
+    criterions = ['gini', 'entropy']
+    best_params = {}
+    num_estimators = 200
+    
     for trial in tqdm(trials):
-        paras = [16]
+        
         trial_name = os.path.splitext(os.path.basename(trial))[0]
 
-        print("-" * 50, "\n\n XGBoost \n\n", "-" * 50, "\n\n")
+        #print("-" * 50, "\n\n XGBoost \n\n", "-" * 50, "\n\n")
         
         for i in range(len(paras)):
             if paras[i] == 4 and i == 2:
